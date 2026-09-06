@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v5 - Smart Calendar</title>
+    <title>Sales CRM Pro v7 - Smart Search</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,7 +38,9 @@
         .btn { padding: 12px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
         .btn-primary { flex: 1; min-width: 140px; background: #3b82f6; color: white; }
         .btn-primary:hover { background: #2563eb; }
-        .btn-secondary { background: white; color: #3b82f6; border: 1px solid #3b82f6; }
+        .btn-secondary { background: white; color: #3b82f6; border: 1px solid #3b82f6; flex: 1; }
+        .btn-success { background: #10b981; color: white; width: 100%; margin-top: 8px; }
+        .btn-success:hover { background: #059669; }
         
         .form-container, .appointment-form { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); display: none; }
         .form-container.show, .appointment-form.show { display: block; }
@@ -62,15 +64,22 @@
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
         .info-row { font-size: 13px; color: #555; display: flex; align-items: center; gap: 8px; margin: 6px 0; }
         .notes-section { background: #f9fafb; padding: 10px; border-radius: 6px; margin: 10px 0; border-left: 3px solid #8b5cf6; font-size: 12px; }
-        .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; padding-top: 12px; border-top: 1px solid #eee; }
-        .card-action-btn { padding: 8px 6px; background: #f5f5f5; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: 500; }
         
-        /* New Upcoming Timeline Styles */
+        .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; padding-top: 12px; border-top: 1px solid #eee; }
+        .card-action-btn { padding: 8px 2px; background: #f5f5f5; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600; color: #333; }
+        .card-action-link { padding: 8px 2px; background: #e0f2fe; color: #0369a1; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; text-align: center; display: block; }
+        
+        /* Match Badges (Search) */
+        .match-badge-container { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .match-badge-label { font-size: 11px; font-weight: 600; color: #6b7280; }
+        .match-tag { font-size: 10px; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+        
+        /* Timeline Styles */
         .timeline-group { margin-bottom: 24px; }
         .timeline-header { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .timeline-header.today { color: #ef4444; } /* Red for today */
-        .timeline-header.tomorrow { color: #f59e0b; } /* Orange for tomorrow */
-        .timeline-header.upcoming { color: #3b82f6; } /* Blue for upcoming */
+        .timeline-header.today { color: #ef4444; } 
+        .timeline-header.tomorrow { color: #f59e0b; } 
+        .timeline-header.upcoming { color: #3b82f6; } 
         .timeline-header span { background: #eee; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; color: #555; }
         
         .appointment-item { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid #3b82f6; position: relative; }
@@ -81,8 +90,10 @@
         .appointment-type-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background: #f0f0f0; }
         .appointment-customer { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 4px; }
         .appointment-note { font-size: 12px; color: #666; background: #f9f9f9; padding: 8px; border-radius: 6px; margin-top: 8px; }
+        
         .appointment-actions { display: flex; gap: 8px; margin-top: 12px; border-top: 1px dashed #eee; padding-top: 12px; }
-        .appointment-actions button { flex: 1; padding: 8px; font-size: 12px; background: #f5f5f5; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .appointment-actions button { flex: 1; padding: 8px; font-size: 12px; background: #f5f5f5; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: #333;}
+        .appointment-actions a { flex: 1; padding: 8px; font-size: 12px; background: #e0f2fe; color: #0369a1; border-radius: 6px; text-decoration: none; text-align: center; font-weight: 600; }
         
         .appointment-form-actions { display: flex; gap: 8px; margin-top: 16px; }
         .appointment-form-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
@@ -103,48 +114,37 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
-            <h1>📱 Sales CRM Pro v5</h1>
-            <p>Khách hàng + Lịch iOS + Thống kê ⚡</p>
+            <h1>📱 Sales CRM Pro v7</h1>
+            <p>Khách hàng + Lịch iOS + Smart Search ⚡</p>
         </div>
 
         <div id="notification" class="notification"></div>
 
-        <!-- Tab Buttons -->
         <div class="tab-buttons">
             <button class="tab-btn active" onclick="switchTab(event, 'list')">👥 Khách hàng</button>
             <button class="tab-btn" onclick="switchTab(event, 'calendar')">📅 Lịch hẹn</button>
             <button class="tab-btn" onclick="switchTab(event, 'stats')">📊 Thống kê</button>
         </div>
 
-        <!-- Tab: List View -->
         <div id="list-tab" class="tab-content active">
-            <!-- Dashboard Stats -->
             <div class="dashboard">
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="totalCustomers">0</div>
-                        <div class="stat-label">Tổng khách</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="newCustomers">0</div>
-                        <div class="stat-label">Khách mới</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="todayAppointments">0</div>
-                        <div class="stat-label">Hẹn hôm nay</div>
-                    </div>
+                    <div class="stat-card"><div class="stat-number" id="totalCustomers">0</div><div class="stat-label">Tổng khách</div></div>
+                    <div class="stat-card"><div class="stat-number" id="newCustomers">0</div><div class="stat-label">Khách mới</div></div>
+                    <div class="stat-card"><div class="stat-number" id="todayAppointments">0</div><div class="stat-label">Hẹn hôm nay</div></div>
                 </div>
             </div>
 
             <div class="action-bar">
                 <button id="btnToggleForm" class="btn btn-primary">+ Thêm khách hàng</button>
-                <button id="btnExport" class="btn btn-secondary">📥 Xuất</button>
-                <button id="btnImport" class="btn btn-secondary">📤 Nhập</button>
+                <div style="display: flex; gap: 8px; width: 100%;">
+                    <button id="btnExport" class="btn btn-secondary">📥 Backup JSON</button>
+                    <button id="btnImport" class="btn btn-secondary">📤 Nhập JSON</button>
+                </div>
+                <button id="btnExportVCF" class="btn btn-success">📞 Xuất file Danh bạ (VCF)</button>
             </div>
 
-            <!-- Customer Form -->
             <div id="formContainer" class="form-container">
                 <h2 class="form-title" id="formTitle">➕ Thêm khách hàng mới</h2>
                 <form id="customerForm" class="form">
@@ -167,7 +167,8 @@
                 </form>
             </div>
 
-            <div class="filter-bar"><input type="text" id="searchInput" class="search-input" placeholder="🔍 Tìm tên hoặc số điện thoại..."></div>
+            <!-- SEARCH BAR ĐÃ ĐƯỢC MỞ RỘNG -->
+            <div class="filter-bar"><input type="text" id="searchInput" class="search-input" placeholder="🔍 Tìm Tên, SĐT, Ghi chú, Tình trạng, Hẹn..."></div>
             <div class="filter-controls">
                 <select id="filterStatus"></select>
                 <select id="sortBy">
@@ -179,19 +180,25 @@
             <div id="listContainer" class="list-container"></div>
         </div>
 
-        <!-- Tab: Upcoming Appointments (Replaced Calendar) -->
+        <!-- Tab: Upcoming Appointments -->
         <div id="calendar-tab" class="tab-content">
             <button id="btnAddAppointment" class="btn btn-primary" style="width: 100%; margin-bottom: 20px; padding: 14px; font-size: 15px;">
                 + Đặt lịch hẹn mới
             </button>
 
-            <!-- Appointment Form -->
             <div class="appointment-form" id="appointmentForm">
                 <h2 class="form-title">Tạo lịch hẹn & Báo thức iOS</h2>
                 <div class="form-group">
-                    <label>Khách hàng *</label>
-                    <select id="appointmentCustomer" required></select>
+                    <label>🔍 Phân loại khách</label>
+                    <select id="appointmentStatusFilter" onchange="updateAppointmentCustomerSelect()">
+                        <option value="all">📊 Hiển thị tất cả</option>
+                        <option value="new">🔵 Khách mới</option>
+                        <option value="contacted">🟠 Đã liên hệ</option>
+                        <option value="interested">🟣 Quan tâm</option>
+                        <option value="negotiating">🔴 Đang thương lượng</option>
+                    </select>
                 </div>
+                <div class="form-group"><label>Khách hàng *</label><select id="appointmentCustomer" required></select></div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group"><label>Ngày *</label><input type="date" id="appointmentDate" required></div>
                     <div class="form-group"><label>Giờ *</label><input type="time" id="appointmentTime" required></div>
@@ -204,21 +211,17 @@
                         <option value="followup">📮 Follow up / Chăm sóc</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Nội dung chi tiết</label>
-                    <textarea id="appointmentNote" placeholder="Ví dụ: Mang theo bảng báo giá lăn bánh..."></textarea>
-                </div>
+                <div class="form-group"><label>Nội dung chi tiết</label><textarea id="appointmentNote" placeholder="Ví dụ: Mang báo giá..."></textarea></div>
                 <div class="appointment-form-actions">
                     <button type="button" style="background: #e5e5e5; color: #333;" onclick="cancelAppointmentForm()">Hủy</button>
-                    <button type="button" style="background: #10b981; color: white;" onclick="saveAppointment()">💾 Lưu & Mở Apple Calendar</button>
+                    <button type="button" style="background: #10b981; color: white;" onclick="saveAppointment()">💾 Lưu & Mở Calendar</button>
                 </div>
             </div>
 
-            <!-- Timeline Feed -->
             <div id="upcomingAppointmentsFeed"></div>
         </div>
 
-        <!-- Tab: Stats View -->
+        <!-- Tab: Stats -->
         <div id="stats-tab" class="tab-content">
             <div class="dashboard" style="margin-bottom: 20px;">
                 <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #333; text-align: center;">Lượng khách hàng nhập vào năm nay</div>
@@ -252,20 +255,7 @@
         </div>
     </div>
 
-    <!-- Confirm Modal -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-title" id="modalTitle"></div>
-            <div class="modal-body" id="modalBody" style="font-size: 14px; margin-bottom: 16px;"></div>
-            <div class="modal-actions">
-                <button id="modalCancel" class="modal-close">Hủy</button>
-                <button id="modalConfirm" class="modal-confirm">Xác nhận</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // ============ STATE & CONFIG ============
         let customers = [];
         let editingId = null;
         let editingAppointmentId = null;
@@ -287,291 +277,202 @@
             followup: { label: '📮 Follow up', color: '#f59e0b' }
         };
 
-        // ============ INIT ============
         document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-            attachEvents();
-            renderList();
-            updateAppointmentCustomerSelect();
-            document.getElementById('appointmentDate').valueAsDate = new Date();
+            loadData(); attachEvents(); renderList(); updateAppointmentCustomerSelect(); document.getElementById('appointmentDate').valueAsDate = new Date();
         });
 
-        function loadData() {
-            const saved = localStorage.getItem('salesCRM_customers');
-            if (saved) {
-                try { customers = JSON.parse(saved); } catch (e) {}
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('salesCRM_customers', JSON.stringify(customers));
-        }
-
+        function loadData() { const saved = localStorage.getItem('salesCRM_customers'); if (saved) { try { customers = JSON.parse(saved); } catch (e) {} } }
+        function saveData() { localStorage.setItem('salesCRM_customers', JSON.stringify(customers)); }
         function showNotification(message, type = 'success') {
-            const notif = document.getElementById('notification');
-            notif.textContent = message;
-            notif.className = `notification show ${type}`;
-            setTimeout(() => { notif.classList.remove('show'); }, 3000);
+            const notif = document.getElementById('notification'); notif.textContent = message;
+            notif.className = `notification show ${type}`; setTimeout(() => { notif.classList.remove('show'); }, 3000);
         }
 
         function switchTab(event, tabName) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabName + '-tab').classList.add('active');
-            event.currentTarget.classList.add('active');
-
-            if (tabName === 'calendar') {
-                renderUpcomingAppointments();
-            } else if (tabName === 'stats') {
-                renderChart();
-            }
+            document.getElementById(tabName + '-tab').classList.add('active'); event.currentTarget.classList.add('active');
+            if (tabName === 'calendar') renderUpcomingAppointments(); else if (tabName === 'stats') renderChart();
         }
 
-        // ============ TIMELINE & APPOINTMENTS ============
         function getUpcomingAppointments() {
-            let allApts = [];
-            const todayStr = new Date().toISOString().split('T')[0];
-            
-            customers.forEach(customer => {
-                if (customer.appointments) {
-                    customer.appointments.forEach(apt => {
-                        if (apt.date >= todayStr) { // Chỉ lấy từ hôm nay trở đi
-                            allApts.push({ ...apt, customerId: customer.id, customerName: customer.name, customerPhone: customer.phone });
-                        }
-                    });
-                }
-            });
-            // Sắp xếp theo ngày -> giờ
-            return allApts.sort((a, b) => {
-                if (a.date === b.date) return a.time.localeCompare(b.time);
-                return a.date.localeCompare(b.date);
-            });
+            let allApts = []; const todayStr = new Date().toISOString().split('T')[0];
+            customers.forEach(c => { if (c.appointments) { c.appointments.forEach(apt => { if (apt.date >= todayStr) { allApts.push({ ...apt, customerId: c.id, customerName: c.name, customerPhone: c.phone }); } }); } });
+            return allApts.sort((a, b) => { if (a.date === b.date) return a.time.localeCompare(b.time); return a.date.localeCompare(b.date); });
         }
 
         function renderUpcomingAppointments() {
-            const feed = document.getElementById('upcomingAppointmentsFeed');
-            const appointments = getUpcomingAppointments();
-            
-            if (appointments.length === 0) {
-                feed.innerHTML = '<div class="empty-state">📭 Bạn chưa có lịch hẹn nào sắp tới</div>';
-                return;
-            }
-
+            const feed = document.getElementById('upcomingAppointmentsFeed'); const appointments = getUpcomingAppointments();
+            if (appointments.length === 0) return feed.innerHTML = '<div class="empty-state">📭 Bạn chưa có lịch hẹn nào sắp tới</div>';
             const todayStr = new Date().toISOString().split('T')[0];
-            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
+            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); const tomorrowStr = tomorrow.toISOString().split('T')[0];
             let grouped = { today: [], tomorrow: [], upcoming: [] };
-
-            appointments.forEach(apt => {
-                if (apt.date === todayStr) grouped.today.push(apt);
-                else if (apt.date === tomorrowStr) grouped.tomorrow.push(apt);
-                else grouped.upcoming.push(apt);
-            });
+            appointments.forEach(apt => { if (apt.date === todayStr) grouped.today.push(apt); else if (apt.date === tomorrowStr) grouped.tomorrow.push(apt); else grouped.upcoming.push(apt); });
 
             let html = '';
-
             const renderGroup = (title, items, className) => {
                 if (items.length === 0) return '';
                 let groupHtml = `<div class="timeline-group"><div class="timeline-header ${className}">${title} <span>${items.length}</span></div>`;
                 items.forEach(apt => {
                     const displayDate = className === 'upcoming' ? ` - ${apt.date.split('-').reverse().join('/')}` : '';
-                    groupHtml += `
-                        <div class="appointment-item ${apt.type}">
-                            <div class="appointment-time">
-                                <span>🕐 ${apt.time}${displayDate}</span>
-                                <span class="appointment-type-badge">${appointmentTypes[apt.type].label}</span>
-                            </div>
-                            <div class="appointment-customer">👤 ${apt.customerName} (${apt.customerPhone})</div>
-                            ${apt.note ? `<div class="appointment-note">📝 ${apt.note}</div>` : ''}
-                            <div class="appointment-actions">
-                                <button onclick="editAppointment('${apt.customerId}', '${apt.id}')">✏️ Sửa</button>
-                                <button onclick="deleteAppointment('${apt.customerId}', '${apt.id}')" style="color:#ef4444;">🗑️ Xóa</button>
-                            </div>
-                        </div>
-                    `;
+                    groupHtml += `<div class="appointment-item ${apt.type}"><div class="appointment-time"><span>🕐 ${apt.time}${displayDate}</span><span class="appointment-type-badge">${appointmentTypes[apt.type].label}</span></div><div class="appointment-customer">👤 ${apt.customerName} (${apt.customerPhone})</div>${apt.note ? `<div class="appointment-note">📝 ${apt.note}</div>` : ''}<div class="appointment-actions"><a href="tel:${apt.customerPhone}">📞 Gọi</a><button onclick="editAppointment('${apt.customerId}', '${apt.id}')">✏️ Sửa</button><button onclick="deleteAppointment('${apt.customerId}', '${apt.id}')" style="color:#ef4444;">🗑️ Xóa</button></div></div>`;
                 });
-                groupHtml += `</div>`;
-                return groupHtml;
+                return groupHtml + `</div>`;
             };
-
-            html += renderGroup('🔴 HÔM NAY', grouped.today, 'today');
-            html += renderGroup('🟠 NGÀY MAI', grouped.tomorrow, 'tomorrow');
-            html += renderGroup('🔵 SẮP TỚI', grouped.upcoming, 'upcoming');
-
-            feed.innerHTML = html;
+            feed.innerHTML = renderGroup('🔴 HÔM NAY', grouped.today, 'today') + renderGroup('🟠 NGÀY MAI', grouped.tomorrow, 'tomorrow') + renderGroup('🔵 SẮP TỚI', grouped.upcoming, 'upcoming');
         }
 
-        // ============ IOS CALENDAR INTEGRATION (ICS FILE) ============
         function generateICSAndDownload(apt, customer) {
-            // Định dạng ngày giờ cho file iCal (YYYYMMDDTHHMMSSZ)
-            const dateParts = apt.date.split('-');
-            const timeParts = apt.time.split(':');
-            
-            // Giả sử múi giờ VN là UTC+7, tính toán giờ UTC cho file ics chuẩn
+            const dateParts = apt.date.split('-'); const timeParts = apt.time.split(':');
             const localDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], timeParts[0], timeParts[1]);
-            const endDate = new Date(localDate.getTime() + 60 * 60 * 1000); // Mặc định event 1 tiếng
-
-            const formatICSDate = (d) => {
-                return d.getUTCFullYear() +
-                    String(d.getUTCMonth() + 1).padStart(2, '0') +
-                    String(d.getUTCDate()).padStart(2, '0') + 'T' +
-                    String(d.getUTCHours()).padStart(2, '0') +
-                    String(d.getUTCMinutes()).padStart(2, '0') +
-                    String(d.getUTCSeconds()).padStart(2, '0') + 'Z';
-            };
-
-            const summary = `${appointmentTypes[apt.type].label.replace(/📞|👥|📮/g, '').trim()} - ${customer.name}`;
-            const description = `Khách hàng: ${customer.name}\\nSĐT: ${customer.phone}\\nGhi chú: ${apt.note || 'Không có'}`;
-            
-            const icsContent = [
-                'BEGIN:VCALENDAR',
-                'VERSION:2.0',
-                'PRODID:-//Sales CRM Pro//VN',
-                'BEGIN:VEVENT',
-                `DTSTART:${formatICSDate(localDate)}`,
-                `DTEND:${formatICSDate(endDate)}`,
-                `SUMMARY:${summary}`,
-                `DESCRIPTION:${description}`,
-                'BEGIN:VALARM',
-                'TRIGGER:-PT15M', // Cảnh báo trước 15 phút
-                'ACTION:DISPLAY',
-                'DESCRIPTION:Nhắc lịch CRM',
-                'END:VALARM',
-                'END:VEVENT',
-                'END:VCALENDAR'
-            ].join('\r\n');
-
-            // Tạo file và kích hoạt tải về -> Safari iOS sẽ tự mở Lịch
-            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `LichHen_${customer.name.replace(/ /g, '')}.ics`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
+            const endDate = new Date(localDate.getTime() + 60 * 60 * 1000);
+            const formatICSDate = (d) => d.getUTCFullYear() + String(d.getUTCMonth() + 1).padStart(2, '0') + String(d.getUTCDate()).padStart(2, '0') + 'T' + String(d.getUTCHours()).padStart(2, '0') + String(d.getUTCMinutes()).padStart(2, '0') + String(d.getUTCSeconds()).padStart(2, '0') + 'Z';
+            const icsContent = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Sales CRM Pro//VN', 'BEGIN:VEVENT', `DTSTART:${formatICSDate(localDate)}`, `DTEND:${formatICSDate(endDate)}`, `SUMMARY:${appointmentTypes[apt.type].label.replace(/📞|👥|📮/g, '').trim()} - ${customer.name}`, `DESCRIPTION:Khách hàng: ${customer.name}\\nSĐT: ${customer.phone}\\nGhi chú: ${apt.note || 'Không có'}`, 'BEGIN:VALARM', 'TRIGGER:-PT15M', 'ACTION:DISPLAY', 'DESCRIPTION:Nhắc lịch CRM', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' }); const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a'); link.href = url; link.download = `LichHen_${customer.name.replace(/ /g, '')}.ics`; document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(url);
         }
 
-        // ============ APPOINTMENT CRUD ============
+        function exportVCF() {
+            if (customers.length === 0) return showNotification('Không có dữ liệu!', 'error');
+            let vcfContent = '';
+            customers.forEach(c => {
+                vcfContent += 'BEGIN:VCARD\r\nVERSION:3.0\r\n';
+                vcfContent += `FN:${c.name}\r\n`;
+                if (c.phone) vcfContent += `TEL;TYPE=CELL:${c.phone.replace(/\s+/g, '')}\r\n`;
+                if (c.address) vcfContent += `ADR;TYPE=HOME:;;${c.address};;;;\r\n`;
+                let noteParams = `Trạng thái CRM: ${statusConfig[c.status].label}`;
+                if (c.notes) noteParams += ` - Nhu cầu: ${c.notes}`;
+                vcfContent += `NOTE:${noteParams.replace(/\n/g, '\\n')}\r\nEND:VCARD\r\n`;
+            });
+            const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' }); const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a'); link.href = url; link.download = `DanhBa_CRM_${new Date().toISOString().split('T')[0]}.vcf`; document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(url);
+            showNotification('📥 Đã xuất Danh bạ (VCF)!');
+        }
+
         function updateAppointmentCustomerSelect() {
-            const select = document.getElementById('appointmentCustomer');
+            const select = document.getElementById('appointmentCustomer'); const filter = document.getElementById('appointmentStatusFilter') ? document.getElementById('appointmentStatusFilter').value : 'all';
             select.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
-            customers.forEach(c => { select.innerHTML += `<option value="${c.id}">${c.name} - ${c.phone}</option>`; });
+            let filtered = filter !== 'all' ? customers.filter(c => c.status === filter) : customers;
+            if (filter === 'all') {
+                Object.keys(statusConfig).forEach(statusKey => {
+                    const groupCustomers = filtered.filter(c => c.status === statusKey);
+                    if (groupCustomers.length > 0) {
+                        const group = document.createElement('optgroup'); group.label = statusConfig[statusKey].label;
+                        groupCustomers.forEach(c => { const opt = document.createElement('option'); opt.value = c.id; opt.textContent = `${c.name} - ${c.phone}`; group.appendChild(opt); });
+                        select.appendChild(group);
+                    }
+                });
+            } else {
+                filtered.forEach(c => { const opt = document.createElement('option'); opt.value = c.id; opt.textContent = `${c.name} - ${c.phone}`; select.appendChild(opt); });
+            }
         }
 
-        function showAddAppointmentForm() {
-            editingAppointmentId = null;
-            document.getElementById('appointmentForm').classList.add('show');
-            document.getElementById('btnAddAppointment').style.display = 'none';
-        }
-
-        function cancelAppointmentForm() {
-            document.getElementById('appointmentForm').classList.remove('show');
-            document.getElementById('btnAddAppointment').style.display = 'block';
-            document.getElementById('appointmentForm').reset();
-            editingAppointmentId = null;
-        }
+        function showAddAppointmentForm() { editingAppointmentId = null; document.getElementById('appointmentStatusFilter').value = 'all'; updateAppointmentCustomerSelect(); document.getElementById('appointmentForm').classList.add('show'); document.getElementById('btnAddAppointment').style.display = 'none'; }
+        function cancelAppointmentForm() { document.getElementById('appointmentForm').classList.remove('show'); document.getElementById('btnAddAppointment').style.display = 'block'; document.getElementById('appointmentForm').reset(); editingAppointmentId = null; }
 
         function saveAppointment() {
-            const customerId = parseInt(document.getElementById('appointmentCustomer').value);
-            const date = document.getElementById('appointmentDate').value;
-            const time = document.getElementById('appointmentTime').value;
-            const type = document.getElementById('appointmentType').value;
-            const note = document.getElementById('appointmentNote').value;
-
+            const customerId = parseInt(document.getElementById('appointmentCustomer').value); const date = document.getElementById('appointmentDate').value; const time = document.getElementById('appointmentTime').value; const type = document.getElementById('appointmentType').value; const note = document.getElementById('appointmentNote').value;
             if (!customerId || !date || !time) return showNotification('Vui lòng điền đủ thông tin!', 'error');
-
-            const customer = customers.find(c => c.id === customerId);
-            if (!customer.appointments) customer.appointments = [];
-            
-            let currentApt = null;
-
+            const customer = customers.find(c => c.id === customerId); if (!customer.appointments) customer.appointments = []; let currentApt = null;
             if (editingAppointmentId) {
                 currentApt = customer.appointments.find(a => a.id === editingAppointmentId);
                 if (currentApt) { currentApt.date = date; currentApt.time = time; currentApt.type = type; currentApt.note = note; }
                 showNotification('✏️ Cập nhật thành công!');
             } else {
                 currentApt = { id: Date.now().toString(), date, time, type, note, createdAt: new Date().toISOString() };
-                customer.appointments.push(currentApt);
-                showNotification('✅ Đã lưu. Đang mở Apple Calendar...');
+                customer.appointments.push(currentApt); showNotification('✅ Đã lưu. Đang mở Calendar...');
             }
-
-            saveData();
-            cancelAppointmentForm();
-            renderUpcomingAppointments();
-            updateDashboard();
-
-            // Mở file ICS để đẩy sang Apple Calendar
-            generateICSAndDownload(currentApt, customer);
+            saveData(); cancelAppointmentForm(); renderUpcomingAppointments(); updateDashboard(); generateICSAndDownload(currentApt, customer);
         }
 
         function editAppointment(customerId, appointmentId) {
-            const customer = customers.find(c => c.id === parseInt(customerId));
-            const apt = customer.appointments.find(a => a.id === appointmentId);
-            editingAppointmentId = appointmentId;
-            document.getElementById('appointmentCustomer').value = customerId;
-            document.getElementById('appointmentDate').value = apt.date;
-            document.getElementById('appointmentTime').value = apt.time;
-            document.getElementById('appointmentType').value = apt.type;
-            document.getElementById('appointmentNote').value = apt.note;
-            document.getElementById('appointmentForm').classList.add('show');
-            document.getElementById('btnAddAppointment').style.display = 'none';
-            // Cuộn lên form
-            document.getElementById('appointmentForm').scrollIntoView({ behavior: 'smooth' });
+            const customer = customers.find(c => c.id === parseInt(customerId)); const apt = customer.appointments.find(a => a.id === appointmentId); editingAppointmentId = appointmentId;
+            if(document.getElementById('appointmentStatusFilter')) document.getElementById('appointmentStatusFilter').value = 'all'; updateAppointmentCustomerSelect();
+            document.getElementById('appointmentCustomer').value = customerId; document.getElementById('appointmentDate').value = apt.date; document.getElementById('appointmentTime').value = apt.time; document.getElementById('appointmentType').value = apt.type; document.getElementById('appointmentNote').value = apt.note;
+            document.getElementById('appointmentForm').classList.add('show'); document.getElementById('btnAddAppointment').style.display = 'none'; document.getElementById('appointmentForm').scrollIntoView({ behavior: 'smooth' });
         }
 
         function deleteAppointment(customerId, appointmentId) {
             if(confirm('Bạn chắc chắn muốn xóa lịch hẹn này?')) {
-                const customer = customers.find(c => c.id === parseInt(customerId));
-                customer.appointments = customer.appointments.filter(a => a.id !== appointmentId);
+                const customer = customers.find(c => c.id === parseInt(customerId)); customer.appointments = customer.appointments.filter(a => a.id !== appointmentId);
                 saveData(); renderUpcomingAppointments(); showNotification('✅ Đã xóa!');
             }
         }
 
-        // ============ LIST & DASHBOARD ============
+        // ============ LIST & SEARCH UPDATE ============
         function renderList() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             const filterStatus = document.getElementById('filterStatus').value;
             const sortBy = document.getElementById('sortBy').value;
 
             let filtered = customers;
-            if (filterStatus && filterStatus !== 'all') filtered = filtered.filter(c => c.status === filterStatus);
-            if (searchTerm) filtered = filtered.filter(c => c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm));
+            
+            if (filterStatus && filterStatus !== 'all') {
+                filtered = filtered.filter(c => c.status === filterStatus);
+            }
+            
+            // SMART SEARCH LOGIC
+            if (searchTerm) {
+                filtered = filtered.filter(c => {
+                    const inNamePhone = c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm);
+                    const inAddress = c.address && c.address.toLowerCase().includes(searchTerm);
+                    const inNotes = c.notes && c.notes.toLowerCase().includes(searchTerm);
+                    const inStatus = statusConfig[c.status].label.toLowerCase().includes(searchTerm);
+                    
+                    let inApt = false;
+                    if (c.appointments) {
+                        inApt = c.appointments.some(a => (a.note && a.note.toLowerCase().includes(searchTerm)) || appointmentTypes[a.type].label.toLowerCase().includes(searchTerm));
+                    }
+                    
+                    return inNamePhone || inAddress || inNotes || inStatus || inApt;
+                });
+            }
             
             if (sortBy === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
             else filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            updateCounters(); updateDashboard(); renderCustomers(filtered);
+            updateCounters(); updateDashboard(); renderCustomers(filtered, searchTerm);
         }
 
         function updateCounters() {
-            const select = document.getElementById('filterStatus');
-            select.innerHTML = `<option value="all">📊 Tất cả (${customers.length})</option>`;
+            const select = document.getElementById('filterStatus'); select.innerHTML = `<option value="all">📊 Tất cả (${customers.length})</option>`;
             Object.keys(statusConfig).forEach(k => {
-                const count = customers.filter(c => c.status === k).length;
-                select.innerHTML += `<option value="${k}">${statusConfig[k].label.split(' ')[0]} (${count})</option>`;
+                const count = customers.filter(c => c.status === k).length; select.innerHTML += `<option value="${k}">${statusConfig[k].label.split(' ')[0]} (${count})</option>`;
             });
         }
 
         function updateDashboard() {
-            document.getElementById('totalCustomers').textContent = customers.length;
-            document.getElementById('newCustomers').textContent = customers.filter(c => c.status === 'new').length;
-            
-            const todayStr = new Date().toISOString().split('T')[0];
-            let todayCount = 0;
-            customers.forEach(c => {
-                if(c.appointments) todayCount += c.appointments.filter(a => a.date === todayStr).length;
-            });
+            document.getElementById('totalCustomers').textContent = customers.length; document.getElementById('newCustomers').textContent = customers.filter(c => c.status === 'new').length;
+            const todayStr = new Date().toISOString().split('T')[0]; let todayCount = 0;
+            customers.forEach(c => { if(c.appointments) todayCount += c.appointments.filter(a => a.date === todayStr).length; });
             document.getElementById('todayAppointments').textContent = todayCount;
         }
 
-        function renderCustomers(list) {
+        // RENDER CUSTOMER KÈM SMART BADGES
+        function renderCustomers(list, searchTerm = '') {
             const container = document.getElementById('listContainer');
-            if (list.length === 0) return container.innerHTML = '<div class="empty-state">😴 Chưa có dữ liệu phù hợp</div>';
+            if (list.length === 0) return container.innerHTML = '<div class="empty-state">😴 Không tìm thấy dữ liệu phù hợp</div>';
 
-            container.innerHTML = list.map(c => `
+            container.innerHTML = list.map(c => {
+                let matchBadges = '';
+                
+                // NẾU CÓ TỪ KHÓA, XÁC ĐỊNH XEM TỪ KHÓA NẰM Ở ĐÂU
+                if (searchTerm) {
+                    let tags = [];
+                    if (c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm) || (c.address && c.address.toLowerCase().includes(searchTerm))) tags.push('👤 Danh thiếp & Liên hệ');
+                    if ((c.notes && c.notes.toLowerCase().includes(searchTerm)) || statusConfig[c.status].label.toLowerCase().includes(searchTerm)) tags.push('📝 Ghi chú & Tình trạng');
+                    if (c.appointments && c.appointments.some(a => (a.note && a.note.toLowerCase().includes(searchTerm)) || appointmentTypes[a.type].label.toLowerCase().includes(searchTerm))) tags.push('📅 Lịch hẹn');
+                    
+                    if (tags.length > 0) {
+                        matchBadges = `
+                        <div class="match-badge-container">
+                            <span class="match-badge-label">Tìm thấy trong:</span>
+                            ${tags.map(t => `<span class="match-tag">${t}</span>`).join('')}
+                        </div>`;
+                    }
+                }
+
+                return `
                 <div class="customer-card" style="border-left-color: ${statusConfig[c.status].color}">
                     <div class="card-header">
                         <div>
@@ -584,97 +485,65 @@
                         ${c.address ? `<p class="info-row">📍 ${c.address}</p>` : ''}
                     </div>
                     ${c.notes ? `<div class="notes-section">${c.notes}</div>` : ''}
+                    
+                    ${matchBadges}
+                    
                     <div class="card-actions">
-                        <button class="card-action-btn" onclick="messageCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}')">💬 Nhắn Zalo</button>
+                        <a href="tel:${c.phone}" class="card-action-link">📞 Gọi</a>
+                        <button class="card-action-btn" onclick="messageCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}')">💬 Zalo</button>
                         <button class="card-action-btn" onclick="editCustomer(${c.id})">✏️ Sửa</button>
                         <button class="card-action-btn" onclick="deleteCustomer(${c.id})" style="color:#ef4444;">🗑️ Xóa</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
-        // ============ ZALO ============
+        // ============ ZALO & ACTIONS ============
         function messageCustomer(name, phone) {
-            const cleanPhone = phone.startsWith('0') ? phone.slice(1) : phone;
-            currentZaloPhone = '84' + cleanPhone;
-            
+            const cleanPhone = phone.startsWith('0') ? phone.slice(1) : phone; currentZaloPhone = '84' + cleanPhone;
             const customer = customers.find(c => c.name === name && c.phone === phone);
-            if (customer && customer.status === 'new') {
-                customer.status = 'contacted'; saveData(); renderList();
-            }
-            document.getElementById('zaloMessageContent').value = '';
-            document.getElementById('zaloModal').classList.add('show');
+            if (customer && customer.status === 'new') { customer.status = 'contacted'; saveData(); renderList(); }
+            document.getElementById('zaloMessageContent').value = ''; document.getElementById('zaloModal').classList.add('show');
         }
         function closeZaloModal() { document.getElementById('zaloModal').classList.remove('show'); }
         function applyTemplate(text) { document.getElementById('zaloMessageContent').value = text; }
         function executeZaloMessage() {
-            const msg = document.getElementById('zaloMessageContent').value;
-            const url = `https://zalo.me/${currentZaloPhone}?text=${encodeURIComponent(msg)}`;
-            
-            navigator.clipboard.writeText(msg).then(() => {
-                showNotification('📋 Đã copy. Đang mở Zalo...');
-                setTimeout(() => { window.open(url, '_blank'); closeZaloModal(); }, 800);
-            }).catch(() => {
-                window.open(url, '_blank'); closeZaloModal();
-            });
+            const msg = document.getElementById('zaloMessageContent').value; const url = `https://zalo.me/${currentZaloPhone}?text=${encodeURIComponent(msg)}`;
+            navigator.clipboard.writeText(msg).then(() => { showNotification('📋 Đã copy. Đang mở Zalo...'); setTimeout(() => { window.open(url, '_blank'); closeZaloModal(); }, 800); }).catch(() => { window.open(url, '_blank'); closeZaloModal(); });
         }
 
-        // ============ CUSTOMER CRUD ============
         function editCustomer(id) {
-            const c = customers.find(x => x.id === id);
-            editingId = id;
-            document.getElementById('name').value = c.name;
-            document.getElementById('phone').value = c.phone;
-            document.getElementById('address').value = c.address;
-            document.getElementById('notes').value = c.notes || '';
-            document.getElementById('status').value = c.status;
-            document.getElementById('formTitle').textContent = '✏️ Cập nhật thông tin';
-            document.querySelector('button[type="submit"]').textContent = '💾 Lưu cập nhật';
-            document.getElementById('formContainer').classList.add('show');
-            document.getElementById('btnToggleForm').textContent = '✕ Hủy';
-            window.scrollTo(0,0);
+            const c = customers.find(x => x.id === id); editingId = id;
+            document.getElementById('name').value = c.name; document.getElementById('phone').value = c.phone;
+            document.getElementById('address').value = c.address; document.getElementById('notes').value = c.notes || ''; document.getElementById('status').value = c.status;
+            document.getElementById('formTitle').textContent = '✏️ Cập nhật thông tin'; document.querySelector('button[type="submit"]').textContent = '💾 Lưu cập nhật';
+            document.getElementById('formContainer').classList.add('show'); document.getElementById('btnToggleForm').textContent = '✕ Hủy'; window.scrollTo(0,0);
         }
 
         function deleteCustomer(id) {
             if(confirm('Bạn chắc chắn muốn xóa khách hàng này?')) {
-                customers = customers.filter(c => c.id !== id);
-                saveData(); showNotification('✅ Đã xóa!'); renderList(); updateAppointmentCustomerSelect();
+                customers = customers.filter(c => c.id !== id); saveData(); showNotification('✅ Đã xóa!'); renderList(); updateAppointmentCustomerSelect();
             }
         }
 
         function handleFormSubmit(e) {
             e.preventDefault();
             const newData = {
-                name: document.getElementById('name').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
-                address: document.getElementById('address').value.trim(),
-                notes: document.getElementById('notes').value.trim(),
-                status: document.getElementById('status').value
+                name: document.getElementById('name').value.trim(), phone: document.getElementById('phone').value.trim(),
+                address: document.getElementById('address').value.trim(), notes: document.getElementById('notes').value.trim(), status: document.getElementById('status').value
             };
-
             if (editingId) {
-                const idx = customers.findIndex(c => c.id === editingId);
-                customers[idx] = { ...customers[idx], ...newData };
-                showNotification('✏️ Cập nhật thành công!');
-                editingId = null;
+                const idx = customers.findIndex(c => c.id === editingId); customers[idx] = { ...customers[idx], ...newData };
+                showNotification('✏️ Cập nhật thành công!'); editingId = null;
             } else {
-                customers.push({ id: Date.now(), ...newData, appointments: [], createdAt: new Date().toISOString() });
-                showNotification('✅ Thêm thành công!');
+                customers.push({ id: Date.now(), ...newData, appointments: [], createdAt: new Date().toISOString() }); showNotification('✅ Thêm thành công!');
             }
-
-            saveData(); document.getElementById('customerForm').reset();
-            document.getElementById('formContainer').classList.remove('show');
-            document.getElementById('btnToggleForm').textContent = '+ Thêm khách hàng';
-            renderList(); updateAppointmentCustomerSelect(); updateDashboard();
+            saveData(); document.getElementById('customerForm').reset(); document.getElementById('formContainer').classList.remove('show');
+            document.getElementById('btnToggleForm').textContent = '+ Thêm khách hàng'; renderList(); updateAppointmentCustomerSelect(); updateDashboard();
         }
 
-        // ============ IMPORT/EXPORT & CHART & EVENTS ============
-        function exportData() {
-            const blob = new Blob([JSON.stringify(customers, null, 2)], { type: 'application/json' });
-            const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
-            link.download = `CRM_${new Date().toISOString().split('T')[0]}.json`; link.click();
-        }
-
+        function exportData() { const blob = new Blob([JSON.stringify(customers, null, 2)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `CRM_${new Date().toISOString().split('T')[0]}.json`; link.click(); }
+        
         function importData(e) {
             const file = e.target.files?.[0]; if (!file) return;
             const reader = new FileReader();
@@ -682,9 +551,7 @@
                 try {
                     const imported = JSON.parse(ev.target.result);
                     if(confirm(`Tìm thấy ${imported.length} dữ liệu. Bấm OK để Gộp chung (Merge) theo SĐT.`)) {
-                        imported.forEach(imp => {
-                            if(!customers.find(c => c.phone === imp.phone)) customers.push(imp);
-                        });
+                        imported.forEach(imp => { if(!customers.find(c => c.phone === imp.phone)) customers.push(imp); });
                         saveData(); renderList(); updateAppointmentCustomerSelect(); showNotification('✅ Đã gộp dữ liệu!');
                     }
                 } catch (err) { showNotification('File lỗi!', 'error'); }
@@ -694,25 +561,18 @@
 
         function renderChart() {
             if(monthlyChartInstance) monthlyChartInstance.destroy();
-            const ctx = document.getElementById('monthlyChart').getContext('2d');
-            const data = Array(12).fill(0);
-            customers.forEach(c => {
-                if(new Date(c.createdAt).getFullYear() === new Date().getFullYear()) data[new Date(c.createdAt).getMonth()]++;
-            });
-            monthlyChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'], datasets: [{ label: 'Data', data: data, backgroundColor: '#3b82f6', borderRadius: 4 }] },
-                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-            });
+            const ctx = document.getElementById('monthlyChart').getContext('2d'); const data = Array(12).fill(0);
+            customers.forEach(c => { if(new Date(c.createdAt).getFullYear() === new Date().getFullYear()) data[new Date(c.createdAt).getMonth()]++; });
+            monthlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'], datasets: [{ label: 'Data', data: data, backgroundColor: '#3b82f6', borderRadius: 4 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
         }
 
         function attachEvents() {
             document.getElementById('btnToggleForm').addEventListener('click', () => {
-                const f = document.getElementById('formContainer'); f.classList.toggle('show');
-                document.getElementById('btnToggleForm').textContent = f.classList.contains('show') ? '✕ Hủy' : '+ Thêm khách hàng';
+                const f = document.getElementById('formContainer'); f.classList.toggle('show'); document.getElementById('btnToggleForm').textContent = f.classList.contains('show') ? '✕ Hủy' : '+ Thêm khách hàng';
                 if(!f.classList.contains('show')) document.getElementById('customerForm').reset();
             });
             document.getElementById('btnExport').addEventListener('click', exportData);
+            document.getElementById('btnExportVCF').addEventListener('click', exportVCF);
             document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileInput').click());
             document.getElementById('fileInput').addEventListener('change', importData);
             document.getElementById('customerForm').addEventListener('submit', handleFormSubmit);
