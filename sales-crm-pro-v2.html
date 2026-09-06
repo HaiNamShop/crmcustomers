@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v7 - Smart Search</title>
+    <title>Sales CRM Pro v8 - Timeline & Alert</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,10 +30,11 @@
         
         /* Dashboard & Form */
         .dashboard { background: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
         .stat-card { background: #f5f5f5; padding: 8px; border-radius: 8px; text-align: center; }
-        .stat-number { font-size: 18px; font-weight: 600; color: #3b82f6; }
-        .stat-label { font-size: 11px; color: #666; margin-top: 4px; }
+        .stat-number { font-size: 16px; font-weight: 700; color: #3b82f6; margin-bottom: 2px;}
+        .stat-label { font-size: 10px; color: #666; font-weight: 600;}
+        
         .action-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
         .btn { padding: 12px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
         .btn-primary { flex: 1; min-width: 140px; background: #3b82f6; color: white; }
@@ -58,23 +59,35 @@
         .filter-controls select { padding: 12px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; background: white; font-family: inherit; }
         
         .list-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .customer-card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); border-left: 4px solid #3b82f6; }
+        .customer-card { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); border-left: 4px solid #3b82f6; transition: all 0.2s; position: relative;}
+        .customer-card.overdue { border-left-color: #ef4444; background: #fffdfd; }
+        .overdue-badge { position: absolute; top: -10px; right: 10px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 4px 8px; border-radius: 12px; box-shadow: 0 2px 4px rgba(239,68,68,0.3); }
+        
         .card-header { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
         .customer-name { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
         .info-row { font-size: 13px; color: #555; display: flex; align-items: center; gap: 8px; margin: 6px 0; }
-        .notes-section { background: #f9fafb; padding: 10px; border-radius: 6px; margin: 10px 0; border-left: 3px solid #8b5cf6; font-size: 12px; }
+        
+        /* TIMELINE LOGS (MỚI) */
+        .logs-section { background: #f9fafb; padding: 12px; border-radius: 8px; margin: 12px 0; border: 1px solid #f3f4f6; }
+        .log-list { max-height: 140px; overflow-y: auto; margin-bottom: 8px; }
+        .log-item { font-size: 12px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #e5e7eb; display: flex; gap: 8px; }
+        .log-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .log-time { font-weight: 600; color: #3b82f6; font-size: 11px; white-space: nowrap; }
+        .log-content { color: #374151; flex: 1; }
+        .quick-note-wrap { display: flex; gap: 6px; }
+        .quick-note-wrap input { flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; font-family: inherit;}
+        .quick-note-wrap button { background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;}
         
         .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; padding-top: 12px; border-top: 1px solid #eee; }
         .card-action-btn { padding: 8px 2px; background: #f5f5f5; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600; color: #333; }
-        .card-action-link { padding: 8px 2px; background: #e0f2fe; color: #0369a1; border-radius: 6px; font-size: 12px; font-weight: 600; text-decoration: none; text-align: center; display: block; }
         
         /* Match Badges (Search) */
         .match-badge-container { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .match-badge-label { font-size: 11px; font-weight: 600; color: #6b7280; }
         .match-tag { font-size: 10px; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
         
-        /* Timeline Styles */
+        /* Timeline Appointments */
         .timeline-group { margin-bottom: 24px; }
         .timeline-header { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
         .timeline-header.today { color: #ef4444; } 
@@ -82,7 +95,7 @@
         .timeline-header.upcoming { color: #3b82f6; } 
         .timeline-header span { background: #eee; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; color: #555; }
         
-        .appointment-item { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid #3b82f6; position: relative; }
+        .appointment-item { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid #3b82f6; }
         .appointment-item.call { border-left-color: #3b82f6; }
         .appointment-item.meeting { border-left-color: #8b5cf6; }
         .appointment-item.followup { border-left-color: #f59e0b; }
@@ -90,10 +103,8 @@
         .appointment-type-badge { font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 600; background: #f0f0f0; }
         .appointment-customer { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 4px; }
         .appointment-note { font-size: 12px; color: #666; background: #f9f9f9; padding: 8px; border-radius: 6px; margin-top: 8px; }
-        
         .appointment-actions { display: flex; gap: 8px; margin-top: 12px; border-top: 1px dashed #eee; padding-top: 12px; }
         .appointment-actions button { flex: 1; padding: 8px; font-size: 12px; background: #f5f5f5; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: #333;}
-        .appointment-actions a { flex: 1; padding: 8px; font-size: 12px; background: #e0f2fe; color: #0369a1; border-radius: 6px; text-decoration: none; text-align: center; font-weight: 600; }
         
         .appointment-form-actions { display: flex; gap: 8px; margin-top: 16px; }
         .appointment-form-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
@@ -108,15 +119,18 @@
         .modal-close { background: #e5e5e5; color: #333; }
         .modal-confirm { background: #3b82f6; color: white; }
         .quick-reply-btn { text-align: left; padding: 10px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; font-size: 13px; color: #0369a1; cursor: pointer; margin-bottom: 8px; width: 100%; display: block; }
-        
         .empty-state { text-align: center; padding: 40px 20px; color: #999; font-size: 15px; background: white; border-radius: 12px; }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📱 Sales CRM Pro v7</h1>
-            <p>Khách hàng + Lịch iOS + Smart Search ⚡</p>
+            <h1>📱 Sales CRM Pro v8</h1>
+            <p>Nhật ký chăm sóc + Cảnh báo bỏ quên ⚡</p>
         </div>
 
         <div id="notification" class="notification"></div>
@@ -133,6 +147,7 @@
                     <div class="stat-card"><div class="stat-number" id="totalCustomers">0</div><div class="stat-label">Tổng khách</div></div>
                     <div class="stat-card"><div class="stat-number" id="newCustomers">0</div><div class="stat-label">Khách mới</div></div>
                     <div class="stat-card"><div class="stat-number" id="todayAppointments">0</div><div class="stat-label">Hẹn hôm nay</div></div>
+                    <div class="stat-card" style="background: #fef2f2; border: 1px solid #fecaca;"><div class="stat-number" id="overdueCustomers" style="color: #ef4444;">0</div><div class="stat-label">Bị bỏ quên (>7đ)</div></div>
                 </div>
             </div>
 
@@ -151,7 +166,7 @@
                     <div class="form-group"><label>Tên khách hàng *</label><input type="text" id="name" required></div>
                     <div class="form-group"><label>Số điện thoại *</label><input type="tel" id="phone" required></div>
                     <div class="form-group"><label>Địa chỉ / Khu vực</label><input type="text" id="address"></div>
-                    <div class="form-group"><label>📝 Ghi chú nhu cầu</label><textarea id="notes"></textarea></div>
+                    <div class="form-group"><label>📝 Ghi chú ban đầu (Sẽ đưa vào Nhật ký)</label><textarea id="notes" placeholder="VD: Khách quan tâm mua VF 8..."></textarea></div>
                     <div class="form-group">
                         <label>Tình trạng</label>
                         <select id="status">
@@ -167,12 +182,12 @@
                 </form>
             </div>
 
-            <!-- SEARCH BAR ĐÃ ĐƯỢC MỞ RỘNG -->
-            <div class="filter-bar"><input type="text" id="searchInput" class="search-input" placeholder="🔍 Tìm Tên, SĐT, Ghi chú, Tình trạng, Hẹn..."></div>
+            <div class="filter-bar"><input type="text" id="searchInput" class="search-input" placeholder="🔍 Tìm Tên, SĐT, Nhật ký, Hẹn..."></div>
             <div class="filter-controls">
                 <select id="filterStatus"></select>
                 <select id="sortBy">
-                    <option value="recent">🕐 Mới nhất</option>
+                    <option value="recent">🕐 Cập nhật gần nhất</option>
+                    <option value="overdue">⚠️ Khách bị bỏ quên</option>
                     <option value="name">↑ Tên (A-Z)</option>
                 </select>
             </div>
@@ -185,7 +200,6 @@
             <button id="btnAddAppointment" class="btn btn-primary" style="width: 100%; margin-bottom: 20px; padding: 14px; font-size: 15px;">
                 + Đặt lịch hẹn mới
             </button>
-
             <div class="appointment-form" id="appointmentForm">
                 <h2 class="form-title">Tạo lịch hẹn & Báo thức iOS</h2>
                 <div class="form-group">
@@ -217,7 +231,6 @@
                     <button type="button" style="background: #10b981; color: white;" onclick="saveAppointment()">💾 Lưu & Mở Calendar</button>
                 </div>
             </div>
-
             <div id="upcomingAppointmentsFeed"></div>
         </div>
 
@@ -260,6 +273,7 @@
         let editingId = null;
         let editingAppointmentId = null;
         let currentZaloPhone = '';
+        let currentZaloId = null;
         let monthlyChartInstance = null;
 
         const statusConfig = {
@@ -281,11 +295,31 @@
             loadData(); attachEvents(); renderList(); updateAppointmentCustomerSelect(); document.getElementById('appointmentDate').valueAsDate = new Date();
         });
 
-        function loadData() { const saved = localStorage.getItem('salesCRM_customers'); if (saved) { try { customers = JSON.parse(saved); } catch (e) {} } }
+        function loadData() { 
+            const saved = localStorage.getItem('salesCRM_customers'); 
+            if (saved) { 
+                try { 
+                    customers = JSON.parse(saved); 
+                    // MIGRATION DATA TO LOGS & LAST CONTACTED
+                    customers.forEach(c => {
+                        if (!c.logs) c.logs = [];
+                        if (c.notes && c.logs.length === 0) {
+                            c.logs.push({ time: c.createdAt, content: c.notes });
+                        }
+                        if (!c.lastContactedAt) c.lastContactedAt = c.createdAt;
+                    });
+                } catch (e) {} 
+            } 
+        }
         function saveData() { localStorage.setItem('salesCRM_customers', JSON.stringify(customers)); }
         function showNotification(message, type = 'success') {
             const notif = document.getElementById('notification'); notif.textContent = message;
             notif.className = `notification show ${type}`; setTimeout(() => { notif.classList.remove('show'); }, 3000);
+        }
+
+        function formatDateTime(isoStr) {
+            const d = new Date(isoStr);
+            return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
         }
 
         function switchTab(event, tabName) {
@@ -295,6 +329,7 @@
             if (tabName === 'calendar') renderUpcomingAppointments(); else if (tabName === 'stats') renderChart();
         }
 
+        // ============ TIMELINE & CALENDAR ============
         function getUpcomingAppointments() {
             let allApts = []; const todayStr = new Date().toISOString().split('T')[0];
             customers.forEach(c => { if (c.appointments) { c.appointments.forEach(apt => { if (apt.date >= todayStr) { allApts.push({ ...apt, customerId: c.id, customerName: c.name, customerPhone: c.phone }); } }); } });
@@ -315,7 +350,7 @@
                 let groupHtml = `<div class="timeline-group"><div class="timeline-header ${className}">${title} <span>${items.length}</span></div>`;
                 items.forEach(apt => {
                     const displayDate = className === 'upcoming' ? ` - ${apt.date.split('-').reverse().join('/')}` : '';
-                    groupHtml += `<div class="appointment-item ${apt.type}"><div class="appointment-time"><span>🕐 ${apt.time}${displayDate}</span><span class="appointment-type-badge">${appointmentTypes[apt.type].label}</span></div><div class="appointment-customer">👤 ${apt.customerName} (${apt.customerPhone})</div>${apt.note ? `<div class="appointment-note">📝 ${apt.note}</div>` : ''}<div class="appointment-actions"><a href="tel:${apt.customerPhone}">📞 Gọi</a><button onclick="editAppointment('${apt.customerId}', '${apt.id}')">✏️ Sửa</button><button onclick="deleteAppointment('${apt.customerId}', '${apt.id}')" style="color:#ef4444;">🗑️ Xóa</button></div></div>`;
+                    groupHtml += `<div class="appointment-item ${apt.type}"><div class="appointment-time"><span>🕐 ${apt.time}${displayDate}</span><span class="appointment-type-badge">${appointmentTypes[apt.type].label}</span></div><div class="appointment-customer">👤 ${apt.customerName} (${apt.customerPhone})</div>${apt.note ? `<div class="appointment-note">📝 ${apt.note}</div>` : ''}<div class="appointment-actions"><button onclick="logCall(${apt.customerId}, '${apt.customerPhone}')" style="background:#e0f2fe; color:#0369a1;">📞 Gọi</button><button onclick="editAppointment('${apt.customerId}', '${apt.id}')">✏️ Sửa</button><button onclick="deleteAppointment('${apt.customerId}', '${apt.id}')" style="color:#ef4444;">🗑️ Xóa</button></div></div>`;
                 });
                 return groupHtml + `</div>`;
             };
@@ -340,8 +375,11 @@
                 vcfContent += `FN:${c.name}\r\n`;
                 if (c.phone) vcfContent += `TEL;TYPE=CELL:${c.phone.replace(/\s+/g, '')}\r\n`;
                 if (c.address) vcfContent += `ADR;TYPE=HOME:;;${c.address};;;;\r\n`;
-                let noteParams = `Trạng thái CRM: ${statusConfig[c.status].label}`;
-                if (c.notes) noteParams += ` - Nhu cầu: ${c.notes}`;
+                
+                // Lấy log mới nhất làm ghi chú danh bạ
+                let noteParams = `Trạng thái: ${statusConfig[c.status].label}`;
+                if (c.logs && c.logs.length > 0) noteParams += ` - Ghi chú: ${c.logs[0].content}`;
+                
                 vcfContent += `NOTE:${noteParams.replace(/\n/g, '\\n')}\r\nEND:VCARD\r\n`;
             });
             const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' }); const url = window.URL.createObjectURL(blob);
@@ -382,6 +420,10 @@
                 currentApt = { id: Date.now().toString(), date, time, type, note, createdAt: new Date().toISOString() };
                 customer.appointments.push(currentApt); showNotification('✅ Đã lưu. Đang mở Calendar...');
             }
+            // Auto log event
+            customer.logs.unshift({ time: new Date().toISOString(), content: `📅 Tạo lịch hẹn: ${appointmentTypes[type].label} ngày ${date}`});
+            customer.lastContactedAt = new Date().toISOString();
+            
             saveData(); cancelAppointmentForm(); renderUpcomingAppointments(); updateDashboard(); generateICSAndDownload(currentApt, customer);
         }
 
@@ -399,37 +441,37 @@
             }
         }
 
-        // ============ LIST & SEARCH UPDATE ============
+        // ============ LIST, LOGS & OVERDUE ============
+        function isCustomerOverdue(c) {
+            if (['completed', 'lost'].includes(c.status)) return false;
+            const days = (new Date() - new Date(c.lastContactedAt)) / (1000*60*60*24);
+            return days > 7;
+        }
+
         function renderList() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             const filterStatus = document.getElementById('filterStatus').value;
             const sortBy = document.getElementById('sortBy').value;
 
             let filtered = customers;
-            
             if (filterStatus && filterStatus !== 'all') {
                 filtered = filtered.filter(c => c.status === filterStatus);
             }
             
-            // SMART SEARCH LOGIC
             if (searchTerm) {
                 filtered = filtered.filter(c => {
                     const inNamePhone = c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm);
                     const inAddress = c.address && c.address.toLowerCase().includes(searchTerm);
-                    const inNotes = c.notes && c.notes.toLowerCase().includes(searchTerm);
                     const inStatus = statusConfig[c.status].label.toLowerCase().includes(searchTerm);
-                    
-                    let inApt = false;
-                    if (c.appointments) {
-                        inApt = c.appointments.some(a => (a.note && a.note.toLowerCase().includes(searchTerm)) || appointmentTypes[a.type].label.toLowerCase().includes(searchTerm));
-                    }
-                    
-                    return inNamePhone || inAddress || inNotes || inStatus || inApt;
+                    const inLogs = c.logs && c.logs.some(l => l.content.toLowerCase().includes(searchTerm));
+                    let inApt = c.appointments && c.appointments.some(a => (a.note && a.note.toLowerCase().includes(searchTerm)) || appointmentTypes[a.type].label.toLowerCase().includes(searchTerm));
+                    return inNamePhone || inAddress || inStatus || inLogs || inApt;
                 });
             }
             
             if (sortBy === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-            else filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            else if (sortBy === 'overdue') filtered.sort((a, b) => new Date(a.lastContactedAt) - new Date(b.lastContactedAt)); // Cũ nhất lên đầu
+            else filtered.sort((a, b) => new Date(b.lastContactedAt) - new Date(a.lastContactedAt)); // Mặc định: Tương tác gần nhất lên đầu
 
             updateCounters(); updateDashboard(); renderCustomers(filtered, searchTerm);
         }
@@ -442,38 +484,72 @@
         }
 
         function updateDashboard() {
-            document.getElementById('totalCustomers').textContent = customers.length; document.getElementById('newCustomers').textContent = customers.filter(c => c.status === 'new').length;
+            document.getElementById('totalCustomers').textContent = customers.length; 
+            document.getElementById('newCustomers').textContent = customers.filter(c => c.status === 'new').length;
             const todayStr = new Date().toISOString().split('T')[0]; let todayCount = 0;
             customers.forEach(c => { if(c.appointments) todayCount += c.appointments.filter(a => a.date === todayStr).length; });
             document.getElementById('todayAppointments').textContent = todayCount;
+            
+            // Đếm số khách bị quên
+            const overdueCount = customers.filter(c => isCustomerOverdue(c)).length;
+            document.getElementById('overdueCustomers').textContent = overdueCount;
         }
 
-        // RENDER CUSTOMER KÈM SMART BADGES
+        function addQuickNote(id) {
+            const input = document.getElementById(`quick-note-${id}`);
+            const content = input.value.trim();
+            if (!content) return;
+            const c = customers.find(x => x.id === id);
+            
+            c.logs.unshift({ time: new Date().toISOString(), content: content });
+            c.lastContactedAt = new Date().toISOString();
+            if(c.status === 'new') c.status = 'contacted';
+            
+            saveData(); renderList();
+            showNotification('✅ Đã thêm ghi chú!');
+        }
+
+        function logCall(id, phone) {
+            const c = customers.find(x => x.id === id);
+            c.logs.unshift({ time: new Date().toISOString(), content: "📞 Đã gọi điện" });
+            c.lastContactedAt = new Date().toISOString();
+            if(c.status === 'new') c.status = 'contacted';
+            saveData(); renderList();
+            window.location.href = `tel:${phone}`;
+        }
+
         function renderCustomers(list, searchTerm = '') {
             const container = document.getElementById('listContainer');
             if (list.length === 0) return container.innerHTML = '<div class="empty-state">😴 Không tìm thấy dữ liệu phù hợp</div>';
 
             container.innerHTML = list.map(c => {
                 let matchBadges = '';
-                
-                // NẾU CÓ TỪ KHÓA, XÁC ĐỊNH XEM TỪ KHÓA NẰM Ở ĐÂU
                 if (searchTerm) {
                     let tags = [];
-                    if (c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm) || (c.address && c.address.toLowerCase().includes(searchTerm))) tags.push('👤 Danh thiếp & Liên hệ');
-                    if ((c.notes && c.notes.toLowerCase().includes(searchTerm)) || statusConfig[c.status].label.toLowerCase().includes(searchTerm)) tags.push('📝 Ghi chú & Tình trạng');
+                    if (c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm) || (c.address && c.address.toLowerCase().includes(searchTerm))) tags.push('👤 Liên hệ');
+                    if (statusConfig[c.status].label.toLowerCase().includes(searchTerm) || (c.logs && c.logs.some(l=>l.content.toLowerCase().includes(searchTerm)))) tags.push('📝 Nhật ký');
                     if (c.appointments && c.appointments.some(a => (a.note && a.note.toLowerCase().includes(searchTerm)) || appointmentTypes[a.type].label.toLowerCase().includes(searchTerm))) tags.push('📅 Lịch hẹn');
-                    
-                    if (tags.length > 0) {
-                        matchBadges = `
-                        <div class="match-badge-container">
-                            <span class="match-badge-label">Tìm thấy trong:</span>
-                            ${tags.map(t => `<span class="match-tag">${t}</span>`).join('')}
-                        </div>`;
-                    }
+                    if (tags.length > 0) matchBadges = `<div class="match-badge-container"><span class="match-badge-label">Tìm thấy trong:</span>${tags.map(t => `<span class="match-tag">${t}</span>`).join('')}</div>`;
+                }
+
+                const overdue = isCustomerOverdue(c);
+                const cardClass = overdue ? 'customer-card overdue' : 'customer-card';
+                const overdueHtml = overdue ? `<div class="overdue-badge">⚠️ Quá 7 ngày chưa chăm sóc</div>` : '';
+
+                // Render Logs
+                let logsHtml = '';
+                if (c.logs && c.logs.length > 0) {
+                    logsHtml = `<div class="log-list">` + c.logs.slice(0, 3).map(l => `
+                        <div class="log-item">
+                            <span class="log-time">${formatDateTime(l.time)}</span>
+                            <span class="log-content">${l.content}</span>
+                        </div>
+                    `).join('') + (c.logs.length > 3 ? `<div style="font-size:10px; color:#9ca3af; text-align:center;">... còn ${c.logs.length - 3} ghi chú cũ hơn</div>` : '') + `</div>`;
                 }
 
                 return `
-                <div class="customer-card" style="border-left-color: ${statusConfig[c.status].color}">
+                <div class="${cardClass}" style="border-left-color: ${overdue ? '#ef4444' : statusConfig[c.status].color}">
+                    ${overdueHtml}
                     <div class="card-header">
                         <div>
                             <div class="customer-name">${c.name}</div>
@@ -484,13 +560,20 @@
                         <p class="info-row">📞 <strong>${c.phone}</strong></p>
                         ${c.address ? `<p class="info-row">📍 ${c.address}</p>` : ''}
                     </div>
-                    ${c.notes ? `<div class="notes-section">${c.notes}</div>` : ''}
+                    
+                    <div class="logs-section">
+                        ${logsHtml}
+                        <div class="quick-note-wrap">
+                            <input type="text" id="quick-note-${c.id}" placeholder="Ghi chú trao đổi..." onkeypress="if(event.key === 'Enter') addQuickNote(${c.id})">
+                            <button onclick="addQuickNote(${c.id})">Lưu</button>
+                        </div>
+                    </div>
                     
                     ${matchBadges}
                     
                     <div class="card-actions">
-                        <a href="tel:${c.phone}" class="card-action-link">📞 Gọi</a>
-                        <button class="card-action-btn" onclick="messageCustomer('${c.name.replace(/'/g, "\\'")}', '${c.phone}')">💬 Zalo</button>
+                        <button class="card-action-btn" onclick="logCall(${c.id}, '${c.phone}')" style="background:#e0f2fe; color:#0369a1;">📞 Gọi</button>
+                        <button class="card-action-btn" onclick="messageCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${c.phone}')">💬 Zalo</button>
                         <button class="card-action-btn" onclick="editCustomer(${c.id})">✏️ Sửa</button>
                         <button class="card-action-btn" onclick="deleteCustomer(${c.id})" style="color:#ef4444;">🗑️ Xóa</button>
                     </div>
@@ -499,23 +582,39 @@
         }
 
         // ============ ZALO & ACTIONS ============
-        function messageCustomer(name, phone) {
-            const cleanPhone = phone.startsWith('0') ? phone.slice(1) : phone; currentZaloPhone = '84' + cleanPhone;
-            const customer = customers.find(c => c.name === name && c.phone === phone);
-            if (customer && customer.status === 'new') { customer.status = 'contacted'; saveData(); renderList(); }
+        function messageCustomer(id, name, phone) {
+            const cleanPhone = phone.startsWith('0') ? phone.slice(1) : phone; 
+            currentZaloPhone = '84' + cleanPhone;
+            currentZaloId = id;
+            
             document.getElementById('zaloMessageContent').value = ''; document.getElementById('zaloModal').classList.add('show');
         }
-        function closeZaloModal() { document.getElementById('zaloModal').classList.remove('show'); }
+        function closeZaloModal() { document.getElementById('zaloModal').classList.remove('show'); currentZaloId = null;}
         function applyTemplate(text) { document.getElementById('zaloMessageContent').value = text; }
+        
         function executeZaloMessage() {
             const msg = document.getElementById('zaloMessageContent').value; const url = `https://zalo.me/${currentZaloPhone}?text=${encodeURIComponent(msg)}`;
+            
+            // Auto log Zalo
+            if (currentZaloId) {
+                const c = customers.find(x => x.id === currentZaloId);
+                c.logs.unshift({ time: new Date().toISOString(), content: `💬 Nhắn Zalo: ${msg.substring(0,30)}...` });
+                c.lastContactedAt = new Date().toISOString();
+                if(c.status === 'new') c.status = 'contacted';
+                saveData(); renderList();
+            }
+
             navigator.clipboard.writeText(msg).then(() => { showNotification('📋 Đã copy. Đang mở Zalo...'); setTimeout(() => { window.open(url, '_blank'); closeZaloModal(); }, 800); }).catch(() => { window.open(url, '_blank'); closeZaloModal(); });
         }
 
         function editCustomer(id) {
             const c = customers.find(x => x.id === id); editingId = id;
             document.getElementById('name').value = c.name; document.getElementById('phone').value = c.phone;
-            document.getElementById('address').value = c.address; document.getElementById('notes').value = c.notes || ''; document.getElementById('status').value = c.status;
+            document.getElementById('address').value = c.address; document.getElementById('status').value = c.status;
+            
+            // Hide initial note input when editing
+            document.getElementById('notes').parentElement.style.display = 'none';
+
             document.getElementById('formTitle').textContent = '✏️ Cập nhật thông tin'; document.querySelector('button[type="submit"]').textContent = '💾 Lưu cập nhật';
             document.getElementById('formContainer').classList.add('show'); document.getElementById('btnToggleForm').textContent = '✕ Hủy'; window.scrollTo(0,0);
         }
@@ -530,15 +629,18 @@
             e.preventDefault();
             const newData = {
                 name: document.getElementById('name').value.trim(), phone: document.getElementById('phone').value.trim(),
-                address: document.getElementById('address').value.trim(), notes: document.getElementById('notes').value.trim(), status: document.getElementById('status').value
+                address: document.getElementById('address').value.trim(), status: document.getElementById('status').value
             };
             if (editingId) {
                 const idx = customers.findIndex(c => c.id === editingId); customers[idx] = { ...customers[idx], ...newData };
                 showNotification('✏️ Cập nhật thành công!'); editingId = null;
             } else {
-                customers.push({ id: Date.now(), ...newData, appointments: [], createdAt: new Date().toISOString() }); showNotification('✅ Thêm thành công!');
+                const initNote = document.getElementById('notes').value.trim();
+                const newC = { id: Date.now(), ...newData, appointments: [], createdAt: new Date().toISOString(), lastContactedAt: new Date().toISOString(), logs: [] };
+                if (initNote) newC.logs.push({ time: newC.createdAt, content: initNote });
+                customers.push(newC); showNotification('✅ Thêm thành công!');
             }
-            saveData(); document.getElementById('customerForm').reset(); document.getElementById('formContainer').classList.remove('show');
+            saveData(); document.getElementById('customerForm').reset(); document.getElementById('notes').parentElement.style.display = 'block'; document.getElementById('formContainer').classList.remove('show');
             document.getElementById('btnToggleForm').textContent = '+ Thêm khách hàng'; renderList(); updateAppointmentCustomerSelect(); updateDashboard();
         }
 
@@ -551,7 +653,13 @@
                 try {
                     const imported = JSON.parse(ev.target.result);
                     if(confirm(`Tìm thấy ${imported.length} dữ liệu. Bấm OK để Gộp chung (Merge) theo SĐT.`)) {
-                        imported.forEach(imp => { if(!customers.find(c => c.phone === imp.phone)) customers.push(imp); });
+                        imported.forEach(imp => { if(!customers.find(c => c.phone === imp.phone)) {
+                            // Ensure structure for old imports
+                            if(!imp.logs) imp.logs = [];
+                            if(imp.notes && imp.logs.length === 0) { imp.logs.push({time: imp.createdAt || new Date().toISOString(), content: imp.notes}); delete imp.notes; }
+                            if(!imp.lastContactedAt) imp.lastContactedAt = imp.createdAt || new Date().toISOString();
+                            customers.push(imp); 
+                        }});
                         saveData(); renderList(); updateAppointmentCustomerSelect(); showNotification('✅ Đã gộp dữ liệu!');
                     }
                 } catch (err) { showNotification('File lỗi!', 'error'); }
@@ -569,7 +677,7 @@
         function attachEvents() {
             document.getElementById('btnToggleForm').addEventListener('click', () => {
                 const f = document.getElementById('formContainer'); f.classList.toggle('show'); document.getElementById('btnToggleForm').textContent = f.classList.contains('show') ? '✕ Hủy' : '+ Thêm khách hàng';
-                if(!f.classList.contains('show')) document.getElementById('customerForm').reset();
+                if(!f.classList.contains('show')) { document.getElementById('customerForm').reset(); document.getElementById('notes').parentElement.style.display = 'block'; }
             });
             document.getElementById('btnExport').addEventListener('click', exportData);
             document.getElementById('btnExportVCF').addEventListener('click', exportVCF);
