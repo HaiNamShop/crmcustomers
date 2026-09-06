@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v8 - Timeline & Alert</title>
+    <title>Sales CRM Pro v8.1 - Single VCF</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -68,7 +68,7 @@
         .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
         .info-row { font-size: 13px; color: #555; display: flex; align-items: center; gap: 8px; margin: 6px 0; }
         
-        /* TIMELINE LOGS (MỚI) */
+        /* TIMELINE LOGS */
         .logs-section { background: #f9fafb; padding: 12px; border-radius: 8px; margin: 12px 0; border: 1px solid #f3f4f6; }
         .log-list { max-height: 140px; overflow-y: auto; margin-bottom: 8px; }
         .log-item { font-size: 12px; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px dashed #e5e7eb; display: flex; gap: 8px; }
@@ -79,8 +79,10 @@
         .quick-note-wrap input { flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; font-family: inherit;}
         .quick-note-wrap button { background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;}
         
-        .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; padding-top: 12px; border-top: 1px solid #eee; }
-        .card-action-btn { padding: 8px 2px; background: #f5f5f5; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600; color: #333; }
+        /* CARD ACTIONS - Cập nhật cho 5 nút */
+        .card-actions { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding-top: 12px; border-top: 1px solid #eee; }
+        .card-action-btn { padding: 8px 2px; background: #f5f5f5; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600; color: #333; text-align: center; }
+        .card-action-link { padding: 8px 2px; background: #e0f2fe; color: #0369a1; border-radius: 6px; font-size: 11px; font-weight: 600; text-decoration: none; text-align: center; display: block; }
         
         /* Match Badges (Search) */
         .match-badge-container { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -121,16 +123,18 @@
         .quick-reply-btn { text-align: left; padding: 10px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; font-size: 13px; color: #0369a1; cursor: pointer; margin-bottom: 8px; width: 100%; display: block; }
         .empty-state { text-align: center; padding: 40px 20px; color: #999; font-size: 15px; background: white; border-radius: 12px; }
 
+        /* Điện thoại sẽ chia 3 cột thay vì 5 để nút không bị quá nhỏ */
         @media (max-width: 480px) {
             .stats-grid { grid-template-columns: 1fr 1fr; }
+            .card-actions { grid-template-columns: 1fr 1fr 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📱 Sales CRM Pro v8</h1>
-            <p>Nhật ký chăm sóc + Cảnh báo bỏ quên ⚡</p>
+            <h1>📱 Sales CRM Pro v8.1</h1>
+            <p>Nhật ký chăm sóc + Xuất VCF Đơn lẻ ⚡</p>
         </div>
 
         <div id="notification" class="notification"></div>
@@ -147,7 +151,7 @@
                     <div class="stat-card"><div class="stat-number" id="totalCustomers">0</div><div class="stat-label">Tổng khách</div></div>
                     <div class="stat-card"><div class="stat-number" id="newCustomers">0</div><div class="stat-label">Khách mới</div></div>
                     <div class="stat-card"><div class="stat-number" id="todayAppointments">0</div><div class="stat-label">Hẹn hôm nay</div></div>
-                    <div class="stat-card" style="background: #fef2f2; border: 1px solid #fecaca;"><div class="stat-number" id="overdueCustomers" style="color: #ef4444;">0</div><div class="stat-label">Bị bỏ quên (>7đ)</div></div>
+                    <div class="stat-card" style="background: #fef2f2; border: 1px solid #fecaca;"><div class="stat-number" id="overdueCustomers" style="color: #ef4444;">0</div><div class="stat-label">Bị quên (>7đ)</div></div>
                 </div>
             </div>
 
@@ -157,7 +161,8 @@
                     <button id="btnExport" class="btn btn-secondary">📥 Backup JSON</button>
                     <button id="btnImport" class="btn btn-secondary">📤 Nhập JSON</button>
                 </div>
-                <button id="btnExportVCF" class="btn btn-success">📞 Xuất file Danh bạ (VCF)</button>
+                <!-- Nút xuất toàn bộ danh bạ -->
+                <button id="btnExportVCF" class="btn btn-success">📞 Xuất TẤT CẢ Danh bạ (VCF)</button>
             </div>
 
             <div id="formContainer" class="form-container">
@@ -300,12 +305,9 @@
             if (saved) { 
                 try { 
                     customers = JSON.parse(saved); 
-                    // MIGRATION DATA TO LOGS & LAST CONTACTED
                     customers.forEach(c => {
                         if (!c.logs) c.logs = [];
-                        if (c.notes && c.logs.length === 0) {
-                            c.logs.push({ time: c.createdAt, content: c.notes });
-                        }
+                        if (c.notes && c.logs.length === 0) { c.logs.push({ time: c.createdAt, content: c.notes }); }
                         if (!c.lastContactedAt) c.lastContactedAt = c.createdAt;
                     });
                 } catch (e) {} 
@@ -367,26 +369,47 @@
             const link = document.createElement('a'); link.href = url; link.download = `LichHen_${customer.name.replace(/ /g, '')}.ics`; document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(url);
         }
 
+        // ============ VCF EXPORT (ALL & SINGLE) ============
         function exportVCF() {
             if (customers.length === 0) return showNotification('Không có dữ liệu!', 'error');
             let vcfContent = '';
-            customers.forEach(c => {
-                vcfContent += 'BEGIN:VCARD\r\nVERSION:3.0\r\n';
-                vcfContent += `FN:${c.name}\r\n`;
-                if (c.phone) vcfContent += `TEL;TYPE=CELL:${c.phone.replace(/\s+/g, '')}\r\n`;
-                if (c.address) vcfContent += `ADR;TYPE=HOME:;;${c.address};;;;\r\n`;
-                
-                // Lấy log mới nhất làm ghi chú danh bạ
-                let noteParams = `Trạng thái: ${statusConfig[c.status].label}`;
-                if (c.logs && c.logs.length > 0) noteParams += ` - Ghi chú: ${c.logs[0].content}`;
-                
-                vcfContent += `NOTE:${noteParams.replace(/\n/g, '\\n')}\r\nEND:VCARD\r\n`;
-            });
-            const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' }); const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a'); link.href = url; link.download = `DanhBa_CRM_${new Date().toISOString().split('T')[0]}.vcf`; document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(url);
-            showNotification('📥 Đã xuất Danh bạ (VCF)!');
+            customers.forEach(c => { vcfContent += buildVCFString(c); });
+            downloadVCF(vcfContent, `DanhBa_ALL_${new Date().toISOString().split('T')[0]}.vcf`);
+            showNotification('📥 Đã xuất Toàn bộ Danh bạ (VCF)!');
         }
 
+        function exportSingleVCF(id) {
+            const c = customers.find(x => x.id === id);
+            if (!c) return;
+            const vcfContent = buildVCFString(c);
+            downloadVCF(vcfContent, `DanhBa_${c.name.replace(/\s+/g, '_')}.vcf`);
+            showNotification(`📥 Đã lưu số: ${c.name}`);
+        }
+
+        function buildVCFString(c) {
+            let str = 'BEGIN:VCARD\r\nVERSION:3.0\r\n';
+            str += `FN:${c.name}\r\n`;
+            if (c.phone) str += `TEL;TYPE=CELL:${c.phone.replace(/\s+/g, '')}\r\n`;
+            if (c.address) str += `ADR;TYPE=HOME:;;${c.address};;;;\r\n`;
+            let noteParams = `Trạng thái CRM: ${statusConfig[c.status].label}`;
+            if (c.logs && c.logs.length > 0) noteParams += ` - Ghi chú: ${c.logs[0].content}`;
+            str += `NOTE:${noteParams.replace(/\n/g, '\\n')}\r\nEND:VCARD\r\n`;
+            return str;
+        }
+
+        function downloadVCF(content, filename) {
+            const blob = new Blob([content], { type: 'text/vcard;charset=utf-8' }); 
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a'); 
+            link.href = url; 
+            link.download = filename; 
+            document.body.appendChild(link); 
+            link.click(); 
+            document.body.removeChild(link); 
+            window.URL.revokeObjectURL(url);
+        }
+
+        // ============ APPOINTMENT CRUD & SELECT FILTER ============
         function updateAppointmentCustomerSelect() {
             const select = document.getElementById('appointmentCustomer'); const filter = document.getElementById('appointmentStatusFilter') ? document.getElementById('appointmentStatusFilter').value : 'all';
             select.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
@@ -420,7 +443,6 @@
                 currentApt = { id: Date.now().toString(), date, time, type, note, createdAt: new Date().toISOString() };
                 customer.appointments.push(currentApt); showNotification('✅ Đã lưu. Đang mở Calendar...');
             }
-            // Auto log event
             customer.logs.unshift({ time: new Date().toISOString(), content: `📅 Tạo lịch hẹn: ${appointmentTypes[type].label} ngày ${date}`});
             customer.lastContactedAt = new Date().toISOString();
             
@@ -454,9 +476,7 @@
             const sortBy = document.getElementById('sortBy').value;
 
             let filtered = customers;
-            if (filterStatus && filterStatus !== 'all') {
-                filtered = filtered.filter(c => c.status === filterStatus);
-            }
+            if (filterStatus && filterStatus !== 'all') { filtered = filtered.filter(c => c.status === filterStatus); }
             
             if (searchTerm) {
                 filtered = filtered.filter(c => {
@@ -470,8 +490,8 @@
             }
             
             if (sortBy === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-            else if (sortBy === 'overdue') filtered.sort((a, b) => new Date(a.lastContactedAt) - new Date(b.lastContactedAt)); // Cũ nhất lên đầu
-            else filtered.sort((a, b) => new Date(b.lastContactedAt) - new Date(a.lastContactedAt)); // Mặc định: Tương tác gần nhất lên đầu
+            else if (sortBy === 'overdue') filtered.sort((a, b) => new Date(a.lastContactedAt) - new Date(b.lastContactedAt)); 
+            else filtered.sort((a, b) => new Date(b.lastContactedAt) - new Date(a.lastContactedAt)); 
 
             updateCounters(); updateDashboard(); renderCustomers(filtered, searchTerm);
         }
@@ -490,7 +510,6 @@
             customers.forEach(c => { if(c.appointments) todayCount += c.appointments.filter(a => a.date === todayStr).length; });
             document.getElementById('todayAppointments').textContent = todayCount;
             
-            // Đếm số khách bị quên
             const overdueCount = customers.filter(c => isCustomerOverdue(c)).length;
             document.getElementById('overdueCustomers').textContent = overdueCount;
         }
@@ -536,14 +555,10 @@
                 const cardClass = overdue ? 'customer-card overdue' : 'customer-card';
                 const overdueHtml = overdue ? `<div class="overdue-badge">⚠️ Quá 7 ngày chưa chăm sóc</div>` : '';
 
-                // Render Logs
                 let logsHtml = '';
                 if (c.logs && c.logs.length > 0) {
                     logsHtml = `<div class="log-list">` + c.logs.slice(0, 3).map(l => `
-                        <div class="log-item">
-                            <span class="log-time">${formatDateTime(l.time)}</span>
-                            <span class="log-content">${l.content}</span>
-                        </div>
+                        <div class="log-item"><span class="log-time">${formatDateTime(l.time)}</span><span class="log-content">${l.content}</span></div>
                     `).join('') + (c.logs.length > 3 ? `<div style="font-size:10px; color:#9ca3af; text-align:center;">... còn ${c.logs.length - 3} ghi chú cũ hơn</div>` : '') + `</div>`;
                 }
 
@@ -571,9 +586,11 @@
                     
                     ${matchBadges}
                     
+                    <!-- 5 NÚT CHỨC NĂNG CHO MỖI KHÁCH HÀNG -->
                     <div class="card-actions">
-                        <button class="card-action-btn" onclick="logCall(${c.id}, '${c.phone}')" style="background:#e0f2fe; color:#0369a1;">📞 Gọi</button>
-                        <button class="card-action-btn" onclick="messageCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${c.phone}')">💬 Zalo</button>
+                        <a href="javascript:void(0)" onclick="logCall(${c.id}, '${c.phone}')" class="card-action-link">📞 Gọi</a>
+                        <button class="card-action-btn" onclick="messageCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${c.phone}')" style="background:#e0f2fe; color:#0369a1;">💬 Zalo</button>
+                        <button class="card-action-btn" onclick="exportSingleVCF(${c.id})" style="background:#dcfce7; color:#166534;">📥 Lưu số</button>
                         <button class="card-action-btn" onclick="editCustomer(${c.id})">✏️ Sửa</button>
                         <button class="card-action-btn" onclick="deleteCustomer(${c.id})" style="color:#ef4444;">🗑️ Xóa</button>
                     </div>
@@ -586,7 +603,6 @@
             const cleanPhone = phone.startsWith('0') ? phone.slice(1) : phone; 
             currentZaloPhone = '84' + cleanPhone;
             currentZaloId = id;
-            
             document.getElementById('zaloMessageContent').value = ''; document.getElementById('zaloModal').classList.add('show');
         }
         function closeZaloModal() { document.getElementById('zaloModal').classList.remove('show'); currentZaloId = null;}
@@ -594,8 +610,6 @@
         
         function executeZaloMessage() {
             const msg = document.getElementById('zaloMessageContent').value; const url = `https://zalo.me/${currentZaloPhone}?text=${encodeURIComponent(msg)}`;
-            
-            // Auto log Zalo
             if (currentZaloId) {
                 const c = customers.find(x => x.id === currentZaloId);
                 c.logs.unshift({ time: new Date().toISOString(), content: `💬 Nhắn Zalo: ${msg.substring(0,30)}...` });
@@ -603,7 +617,6 @@
                 if(c.status === 'new') c.status = 'contacted';
                 saveData(); renderList();
             }
-
             navigator.clipboard.writeText(msg).then(() => { showNotification('📋 Đã copy. Đang mở Zalo...'); setTimeout(() => { window.open(url, '_blank'); closeZaloModal(); }, 800); }).catch(() => { window.open(url, '_blank'); closeZaloModal(); });
         }
 
@@ -611,10 +624,7 @@
             const c = customers.find(x => x.id === id); editingId = id;
             document.getElementById('name').value = c.name; document.getElementById('phone').value = c.phone;
             document.getElementById('address').value = c.address; document.getElementById('status').value = c.status;
-            
-            // Hide initial note input when editing
             document.getElementById('notes').parentElement.style.display = 'none';
-
             document.getElementById('formTitle').textContent = '✏️ Cập nhật thông tin'; document.querySelector('button[type="submit"]').textContent = '💾 Lưu cập nhật';
             document.getElementById('formContainer').classList.add('show'); document.getElementById('btnToggleForm').textContent = '✕ Hủy'; window.scrollTo(0,0);
         }
@@ -654,7 +664,6 @@
                     const imported = JSON.parse(ev.target.result);
                     if(confirm(`Tìm thấy ${imported.length} dữ liệu. Bấm OK để Gộp chung (Merge) theo SĐT.`)) {
                         imported.forEach(imp => { if(!customers.find(c => c.phone === imp.phone)) {
-                            // Ensure structure for old imports
                             if(!imp.logs) imp.logs = [];
                             if(imp.notes && imp.logs.length === 0) { imp.logs.push({time: imp.createdAt || new Date().toISOString(), content: imp.notes}); delete imp.notes; }
                             if(!imp.lastContactedAt) imp.lastContactedAt = imp.createdAt || new Date().toISOString();
