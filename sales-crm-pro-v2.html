@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v8.1 - Single VCF</title>
+    <title>Sales CRM Pro v8.2 - VCF Fixed</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -123,7 +123,6 @@
         .quick-reply-btn { text-align: left; padding: 10px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; font-size: 13px; color: #0369a1; cursor: pointer; margin-bottom: 8px; width: 100%; display: block; }
         .empty-state { text-align: center; padding: 40px 20px; color: #999; font-size: 15px; background: white; border-radius: 12px; }
 
-        /* Điện thoại sẽ chia 3 cột thay vì 5 để nút không bị quá nhỏ */
         @media (max-width: 480px) {
             .stats-grid { grid-template-columns: 1fr 1fr; }
             .card-actions { grid-template-columns: 1fr 1fr 1fr; }
@@ -133,8 +132,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📱 Sales CRM Pro v8.1</h1>
-            <p>Nhật ký chăm sóc + Xuất VCF Đơn lẻ ⚡</p>
+            <h1>📱 Sales CRM Pro v8.2</h1>
+            <p>Nhật ký chăm sóc + Xuất VCF Fix ⚡</p>
         </div>
 
         <div id="notification" class="notification"></div>
@@ -161,7 +160,6 @@
                     <button id="btnExport" class="btn btn-secondary">📥 Backup JSON</button>
                     <button id="btnImport" class="btn btn-secondary">📤 Nhập JSON</button>
                 </div>
-                <!-- Nút xuất toàn bộ danh bạ -->
                 <button id="btnExportVCF" class="btn btn-success">📞 Xuất TẤT CẢ Danh bạ (VCF)</button>
             </div>
 
@@ -200,7 +198,6 @@
             <div id="listContainer" class="list-container"></div>
         </div>
 
-        <!-- Tab: Upcoming Appointments -->
         <div id="calendar-tab" class="tab-content">
             <button id="btnAddAppointment" class="btn btn-primary" style="width: 100%; margin-bottom: 20px; padding: 14px; font-size: 15px;">
                 + Đặt lịch hẹn mới
@@ -239,7 +236,6 @@
             <div id="upcomingAppointmentsFeed"></div>
         </div>
 
-        <!-- Tab: Stats -->
         <div id="stats-tab" class="tab-content">
             <div class="dashboard" style="margin-bottom: 20px;">
                 <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #333; text-align: center;">Lượng khách hàng nhập vào năm nay</div>
@@ -250,7 +246,6 @@
 
     <input type="file" id="fileInput" style="display: none;" accept=".json">
 
-    <!-- Zalo Modal -->
     <div id="zaloModal" class="modal">
         <div class="modal-content">
             <div class="modal-title">💬 Gửi tin nhắn Zalo</div>
@@ -331,7 +326,6 @@
             if (tabName === 'calendar') renderUpcomingAppointments(); else if (tabName === 'stats') renderChart();
         }
 
-        // ============ TIMELINE & CALENDAR ============
         function getUpcomingAppointments() {
             let allApts = []; const todayStr = new Date().toISOString().split('T')[0];
             customers.forEach(c => { if (c.appointments) { c.appointments.forEach(apt => { if (apt.date >= todayStr) { allApts.push({ ...apt, customerId: c.id, customerName: c.name, customerPhone: c.phone }); } }); } });
@@ -369,25 +363,10 @@
             const link = document.createElement('a'); link.href = url; link.download = `LichHen_${customer.name.replace(/ /g, '')}.ics`; document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(url);
         }
 
-        // ============ VCF EXPORT (ALL & SINGLE) ============
-        function exportVCF() {
-            if (customers.length === 0) return showNotification('Không có dữ liệu!', 'error');
-            let vcfContent = '';
-            customers.forEach(c => { vcfContent += buildVCFString(c); });
-            downloadVCF(vcfContent, `DanhBa_ALL_${new Date().toISOString().split('T')[0]}.vcf`);
-            showNotification('📥 Đã xuất Toàn bộ Danh bạ (VCF)!');
-        }
-
-        function exportSingleVCF(id) {
-            const c = customers.find(x => x.id === id);
-            if (!c) return;
-            const vcfContent = buildVCFString(c);
-            downloadVCF(vcfContent, `DanhBa_${c.name.replace(/\s+/g, '_')}.vcf`);
-            showNotification(`📥 Đã lưu số: ${c.name}`);
-        }
-
         function buildVCFString(c) {
             let str = 'BEGIN:VCARD\r\nVERSION:3.0\r\n';
+            // THÊM TRƯỜNG N ĐỂ FIX LỖI IMPORT DANH BẠ TRÊN MỘT SỐ ĐIỆN THOẠI
+            str += `N:;${c.name};;;;\r\n`;
             str += `FN:${c.name}\r\n`;
             if (c.phone) str += `TEL;TYPE=CELL:${c.phone.replace(/\s+/g, '')}\r\n`;
             if (c.address) str += `ADR;TYPE=HOME:;;${c.address};;;;\r\n`;
@@ -400,16 +379,23 @@
         function downloadVCF(content, filename) {
             const blob = new Blob([content], { type: 'text/vcard;charset=utf-8' }); 
             const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a'); 
-            link.href = url; 
-            link.download = filename; 
-            document.body.appendChild(link); 
-            link.click(); 
-            document.body.removeChild(link); 
-            window.URL.revokeObjectURL(url);
+            const link = document.createElement('a'); link.href = url; link.download = filename; 
+            document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(url);
         }
 
-        // ============ APPOINTMENT CRUD & SELECT FILTER ============
+        function exportVCF() {
+            if (customers.length === 0) return showNotification('Không có dữ liệu!', 'error');
+            let vcfContent = ''; customers.forEach(c => { vcfContent += buildVCFString(c); });
+            downloadVCF(vcfContent, `DanhBa_ALL_${new Date().toISOString().split('T')[0]}.vcf`);
+            showNotification('📥 Đã xuất Toàn bộ Danh bạ (VCF)!');
+        }
+
+        function exportSingleVCF(id) {
+            const c = customers.find(x => x.id === id); if (!c) return;
+            downloadVCF(buildVCFString(c), `DanhBa_${c.name.replace(/\s+/g, '_')}.vcf`);
+            showNotification(`📥 Đã lưu số: ${c.name}`);
+        }
+
         function updateAppointmentCustomerSelect() {
             const select = document.getElementById('appointmentCustomer'); const filter = document.getElementById('appointmentStatusFilter') ? document.getElementById('appointmentStatusFilter').value : 'all';
             select.innerHTML = '<option value="">-- Chọn khách hàng --</option>';
@@ -463,7 +449,6 @@
             }
         }
 
-        // ============ LIST, LOGS & OVERDUE ============
         function isCustomerOverdue(c) {
             if (['completed', 'lost'].includes(c.status)) return false;
             const days = (new Date() - new Date(c.lastContactedAt)) / (1000*60*60*24);
@@ -509,31 +494,22 @@
             const todayStr = new Date().toISOString().split('T')[0]; let todayCount = 0;
             customers.forEach(c => { if(c.appointments) todayCount += c.appointments.filter(a => a.date === todayStr).length; });
             document.getElementById('todayAppointments').textContent = todayCount;
-            
             const overdueCount = customers.filter(c => isCustomerOverdue(c)).length;
             document.getElementById('overdueCustomers').textContent = overdueCount;
         }
 
         function addQuickNote(id) {
-            const input = document.getElementById(`quick-note-${id}`);
-            const content = input.value.trim();
-            if (!content) return;
+            const input = document.getElementById(`quick-note-${id}`); const content = input.value.trim(); if (!content) return;
             const c = customers.find(x => x.id === id);
-            
-            c.logs.unshift({ time: new Date().toISOString(), content: content });
-            c.lastContactedAt = new Date().toISOString();
+            c.logs.unshift({ time: new Date().toISOString(), content: content }); c.lastContactedAt = new Date().toISOString();
             if(c.status === 'new') c.status = 'contacted';
-            
-            saveData(); renderList();
-            showNotification('✅ Đã thêm ghi chú!');
+            saveData(); renderList(); showNotification('✅ Đã thêm ghi chú!');
         }
 
         function logCall(id, phone) {
             const c = customers.find(x => x.id === id);
-            c.logs.unshift({ time: new Date().toISOString(), content: "📞 Đã gọi điện" });
-            c.lastContactedAt = new Date().toISOString();
-            if(c.status === 'new') c.status = 'contacted';
-            saveData(); renderList();
+            c.logs.unshift({ time: new Date().toISOString(), content: "📞 Đã gọi điện" }); c.lastContactedAt = new Date().toISOString();
+            if(c.status === 'new') c.status = 'contacted'; saveData(); renderList();
             window.location.href = `tel:${phone}`;
         }
 
@@ -551,15 +527,12 @@
                     if (tags.length > 0) matchBadges = `<div class="match-badge-container"><span class="match-badge-label">Tìm thấy trong:</span>${tags.map(t => `<span class="match-tag">${t}</span>`).join('')}</div>`;
                 }
 
-                const overdue = isCustomerOverdue(c);
-                const cardClass = overdue ? 'customer-card overdue' : 'customer-card';
+                const overdue = isCustomerOverdue(c); const cardClass = overdue ? 'customer-card overdue' : 'customer-card';
                 const overdueHtml = overdue ? `<div class="overdue-badge">⚠️ Quá 7 ngày chưa chăm sóc</div>` : '';
 
                 let logsHtml = '';
                 if (c.logs && c.logs.length > 0) {
-                    logsHtml = `<div class="log-list">` + c.logs.slice(0, 3).map(l => `
-                        <div class="log-item"><span class="log-time">${formatDateTime(l.time)}</span><span class="log-content">${l.content}</span></div>
-                    `).join('') + (c.logs.length > 3 ? `<div style="font-size:10px; color:#9ca3af; text-align:center;">... còn ${c.logs.length - 3} ghi chú cũ hơn</div>` : '') + `</div>`;
+                    logsHtml = `<div class="log-list">` + c.logs.slice(0, 3).map(l => `<div class="log-item"><span class="log-time">${formatDateTime(l.time)}</span><span class="log-content">${l.content}</span></div>`).join('') + (c.logs.length > 3 ? `<div style="font-size:10px; color:#9ca3af; text-align:center;">... còn ${c.logs.length - 3} ghi chú cũ hơn</div>` : '') + `</div>`;
                 }
 
                 return `
@@ -586,7 +559,6 @@
                     
                     ${matchBadges}
                     
-                    <!-- 5 NÚT CHỨC NĂNG CHO MỖI KHÁCH HÀNG -->
                     <div class="card-actions">
                         <a href="javascript:void(0)" onclick="logCall(${c.id}, '${c.phone}')" class="card-action-link">📞 Gọi</a>
                         <button class="card-action-btn" onclick="messageCustomer(${c.id}, '${c.name.replace(/'/g, "\\'")}', '${c.phone}')" style="background:#e0f2fe; color:#0369a1;">💬 Zalo</button>
@@ -598,11 +570,8 @@
             }).join('');
         }
 
-        // ============ ZALO & ACTIONS ============
         function messageCustomer(id, name, phone) {
-            const cleanPhone = phone.startsWith('0') ? phone.slice(1) : phone; 
-            currentZaloPhone = '84' + cleanPhone;
-            currentZaloId = id;
+            const cleanPhone = phone.startsWith('0') ? phone.slice(1) : phone; currentZaloPhone = '84' + cleanPhone; currentZaloId = id;
             document.getElementById('zaloMessageContent').value = ''; document.getElementById('zaloModal').classList.add('show');
         }
         function closeZaloModal() { document.getElementById('zaloModal').classList.remove('show'); currentZaloId = null;}
@@ -611,10 +580,7 @@
         function executeZaloMessage() {
             const msg = document.getElementById('zaloMessageContent').value; const url = `https://zalo.me/${currentZaloPhone}?text=${encodeURIComponent(msg)}`;
             if (currentZaloId) {
-                const c = customers.find(x => x.id === currentZaloId);
-                c.logs.unshift({ time: new Date().toISOString(), content: `💬 Nhắn Zalo: ${msg.substring(0,30)}...` });
-                c.lastContactedAt = new Date().toISOString();
-                if(c.status === 'new') c.status = 'contacted';
+                const c = customers.find(x => x.id === currentZaloId); c.logs.unshift({ time: new Date().toISOString(), content: `💬 Nhắn Zalo: ${msg.substring(0,30)}...` }); c.lastContactedAt = new Date().toISOString(); if(c.status === 'new') c.status = 'contacted';
                 saveData(); renderList();
             }
             navigator.clipboard.writeText(msg).then(() => { showNotification('📋 Đã copy. Đang mở Zalo...'); setTimeout(() => { window.open(url, '_blank'); closeZaloModal(); }, 800); }).catch(() => { window.open(url, '_blank'); closeZaloModal(); });
@@ -630,25 +596,18 @@
         }
 
         function deleteCustomer(id) {
-            if(confirm('Bạn chắc chắn muốn xóa khách hàng này?')) {
-                customers = customers.filter(c => c.id !== id); saveData(); showNotification('✅ Đã xóa!'); renderList(); updateAppointmentCustomerSelect();
-            }
+            if(confirm('Bạn chắc chắn muốn xóa khách hàng này?')) { customers = customers.filter(c => c.id !== id); saveData(); showNotification('✅ Đã xóa!'); renderList(); updateAppointmentCustomerSelect(); }
         }
 
         function handleFormSubmit(e) {
             e.preventDefault();
-            const newData = {
-                name: document.getElementById('name').value.trim(), phone: document.getElementById('phone').value.trim(),
-                address: document.getElementById('address').value.trim(), status: document.getElementById('status').value
-            };
+            const newData = { name: document.getElementById('name').value.trim(), phone: document.getElementById('phone').value.trim(), address: document.getElementById('address').value.trim(), status: document.getElementById('status').value };
             if (editingId) {
                 const idx = customers.findIndex(c => c.id === editingId); customers[idx] = { ...customers[idx], ...newData };
                 showNotification('✏️ Cập nhật thành công!'); editingId = null;
             } else {
-                const initNote = document.getElementById('notes').value.trim();
-                const newC = { id: Date.now(), ...newData, appointments: [], createdAt: new Date().toISOString(), lastContactedAt: new Date().toISOString(), logs: [] };
-                if (initNote) newC.logs.push({ time: newC.createdAt, content: initNote });
-                customers.push(newC); showNotification('✅ Thêm thành công!');
+                const initNote = document.getElementById('notes').value.trim(); const newC = { id: Date.now(), ...newData, appointments: [], createdAt: new Date().toISOString(), lastContactedAt: new Date().toISOString(), logs: [] };
+                if (initNote) newC.logs.push({ time: newC.createdAt, content: initNote }); customers.push(newC); showNotification('✅ Thêm thành công!');
             }
             saveData(); document.getElementById('customerForm').reset(); document.getElementById('notes').parentElement.style.display = 'block'; document.getElementById('formContainer').classList.remove('show');
             document.getElementById('btnToggleForm').textContent = '+ Thêm khách hàng'; renderList(); updateAppointmentCustomerSelect(); updateDashboard();
@@ -657,17 +616,14 @@
         function exportData() { const blob = new Blob([JSON.stringify(customers, null, 2)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `CRM_${new Date().toISOString().split('T')[0]}.json`; link.click(); }
         
         function importData(e) {
-            const file = e.target.files?.[0]; if (!file) return;
-            const reader = new FileReader();
+            const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader();
             reader.onload = (ev) => {
                 try {
                     const imported = JSON.parse(ev.target.result);
                     if(confirm(`Tìm thấy ${imported.length} dữ liệu. Bấm OK để Gộp chung (Merge) theo SĐT.`)) {
                         imported.forEach(imp => { if(!customers.find(c => c.phone === imp.phone)) {
-                            if(!imp.logs) imp.logs = [];
-                            if(imp.notes && imp.logs.length === 0) { imp.logs.push({time: imp.createdAt || new Date().toISOString(), content: imp.notes}); delete imp.notes; }
-                            if(!imp.lastContactedAt) imp.lastContactedAt = imp.createdAt || new Date().toISOString();
-                            customers.push(imp); 
+                            if(!imp.logs) imp.logs = []; if(imp.notes && imp.logs.length === 0) { imp.logs.push({time: imp.createdAt || new Date().toISOString(), content: imp.notes}); delete imp.notes; }
+                            if(!imp.lastContactedAt) imp.lastContactedAt = imp.createdAt || new Date().toISOString(); customers.push(imp); 
                         }});
                         saveData(); renderList(); updateAppointmentCustomerSelect(); showNotification('✅ Đã gộp dữ liệu!');
                     }
