@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v9 - Timeline Focus</title>
+    <title>Sales CRM Pro v10 - Global Timeline</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -78,13 +78,12 @@
         .info-row { font-size: 14px; color: #4b5563; display: flex; align-items: flex-start; gap: 8px; margin: 8px 0; font-weight: 500;}
         .info-icon { font-size: 16px; }
         
-        /* TIMELINE LOGS (Focus Area) */
+        /* TIMELINE LOGS (Thẻ Khách hàng) */
         .logs-container { background: #f8fafc; border-top: 1px solid #e5e7eb; padding: 16px; }
         .logs-title { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center;}
         
         .log-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; max-height: 250px; overflow-y: auto; padding-right: 4px;}
         .log-item { display: flex; gap: 12px; position: relative; }
-        /* Timeline line */
         .log-item::before { content: ''; position: absolute; left: 4px; top: 16px; bottom: -12px; width: 2px; background: #e5e7eb; z-index: 1;}
         .log-item:last-child::before { display: none; }
         
@@ -102,15 +101,22 @@
         .card-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px; border-top: 1px solid #e5e7eb; background: white; }
         .card-action-btn, .card-action-link { padding: 10px 4px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; text-align: center; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; transition: transform 0.1s;}
         .card-action-btn:active, .card-action-link:active { transform: scale(0.95); }
-        
         .btn-call { background: #e0f2fe; color: #0284c7; }
         .btn-zalo { background: #dbeafe; color: #1d4ed8; }
         .btn-vcf { background: #dcfce7; color: #166534; }
         .btn-edit { background: #f3f4f6; color: #4b5563; }
         
-        /* Search Badges */
-        .match-badge-container { padding: 0 16px 12px 16px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-        .match-tag { font-size: 11px; background: #fef9c3; color: #b45309; padding: 4px 10px; border-radius: 12px; font-weight: 600; border: 1px solid #fde68a;}
+        /* GLOBAL TIMELINE (Tab Nhật Ký Chung) */
+        .global-timeline-group { margin-bottom: 24px; }
+        .global-timeline-header { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 12px; padding: 6px 12px; background: #e5e7eb; display: inline-block; border-radius: 6px;}
+        
+        .global-log-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid #3b82f6; display: flex; flex-direction: column; gap: 8px;}
+        .global-log-header { display: flex; justify-content: space-between; align-items: center; }
+        .global-log-time { font-weight: 700; color: #1f2937; font-size: 15px;}
+        .global-log-customer { font-weight: 600; color: #4b5563; font-size: 14px;}
+        .global-log-content { background: #f9fafb; padding: 10px; border-radius: 8px; font-size: 14px; color: #111827; border: 1px solid #f3f4f6;}
+        .global-log-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;}
+        .global-log-btn { padding: 8px; font-size: 13px; font-weight: 600; border-radius: 6px; text-align: center; text-decoration: none; border: none; cursor: pointer;}
         
         /* Modals */
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px);}
@@ -129,17 +135,19 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>C-CRM Timeline</h1>
-            <p>Tập trung Nhật ký Chăm sóc Khách hàng</p>
+            <h1>C-CRM Pro</h1>
+            <p>Quản lý Khách hàng & Nhật ký chung</p>
         </div>
 
         <div id="notification" class="notification"></div>
 
         <div class="tab-buttons">
             <button class="tab-btn active" onclick="switchTab(event, 'list')">📇 Danh thiếp</button>
+            <button class="tab-btn" onclick="switchTab(event, 'timeline')">📜 Nhật ký chung</button>
             <button class="tab-btn" onclick="switchTab(event, 'stats')">📊 Thống kê</button>
         </div>
 
+        <!-- TAB 1: DANH THIẾP (KHÁCH HÀNG) -->
         <div id="list-tab" class="tab-content active">
             <div class="dashboard">
                 <div class="stats-grid">
@@ -195,6 +203,17 @@
             <div id="listContainer" class="list-container"></div>
         </div>
 
+        <!-- TAB 2: NHẬT KÝ CHUNG (GLOBAL TIMELINE) -->
+        <div id="timeline-tab" class="tab-content">
+            <div class="dashboard" style="margin-bottom: 20px;">
+                <h2 style="font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 8px;">Dòng thời gian hoạt động</h2>
+                <p style="font-size: 13px; color: #6b7280;">Hiển thị toàn bộ lịch sử chăm sóc của tất cả khách hàng từ mới nhất đến cũ nhất.</p>
+            </div>
+            
+            <div id="globalTimelineFeed"></div>
+        </div>
+
+        <!-- TAB 3: THỐNG KÊ -->
         <div id="stats-tab" class="tab-content">
             <div class="dashboard" style="margin-bottom: 20px;">
                 <div style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #111827; text-align: center;">Dữ liệu khách mới trong năm</div>
@@ -205,6 +224,7 @@
 
     <input type="file" id="fileInput" style="display: none;" accept=".json">
 
+    <!-- ZALO MODAL -->
     <div id="zaloModal" class="modal">
         <div class="modal-content">
             <div class="modal-title">💬 Kịch bản nhắn Zalo</div>
@@ -251,29 +271,21 @@
             if (saved) { 
                 try { 
                     customers = JSON.parse(saved); 
-                    // Migrate data to ensure logs and lastContactedAt exist
                     customers.forEach(c => {
                         if (!c.logs) c.logs = [];
-                        // Di chuyển ghi chú cũ (notes) vào log đầu tiên nếu log trống
                         if (c.notes && c.logs.length === 0) { c.logs.push({ time: c.createdAt, content: c.notes }); }
-                        // Xử lý cả mảng appointments cũ biến thành log nếu có
+                        // Chuyển lịch hẹn (nếu có từ bản cũ) vào log
                         if (c.appointments && c.appointments.length > 0) {
                             c.appointments.forEach(a => {
                                 const aptLog = `📅 Từng lên lịch hẹn: ${a.date} ${a.time} - ${a.note || ''}`;
-                                // Check trùng để ko bị lặp khi load lại
-                                if(!c.logs.some(l => l.content === aptLog)) {
-                                    c.logs.push({ time: new Date(a.date).toISOString(), content: aptLog });
-                                }
+                                if(!c.logs.some(l => l.content === aptLog)) c.logs.push({ time: new Date(a.date).toISOString(), content: aptLog });
                             });
-                            delete c.appointments; // Xoá mảng cũ cho nhẹ data
+                            delete c.appointments;
                         }
-                        
                         if (!c.lastContactedAt) c.lastContactedAt = c.createdAt;
-                        
-                        // Sort logs descending (newest first)
                         c.logs.sort((a,b) => new Date(b.time) - new Date(a.time));
                     });
-                    saveData(); // Cập nhật lại cấu trúc chuẩn
+                    saveData();
                 } catch (e) { console.error("Error loading data", e);} 
             } 
         }
@@ -287,10 +299,8 @@
             const d = new Date(isoStr);
             const now = new Date();
             const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            
             const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
             const dateStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-            
             if (isToday) return `Hôm nay, ${timeStr}`;
             return `${dateStr} - ${timeStr}`;
         }
@@ -300,6 +310,64 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabName + '-tab').classList.add('active'); event.currentTarget.classList.add('active');
             if (tabName === 'stats') renderChart();
+            if (tabName === 'timeline') renderGlobalTimeline();
+        }
+
+        // ============ TAB NHẬT KÝ CHUNG (GLOBAL TIMELINE) ============
+        function renderGlobalTimeline() {
+            let allLogs = [];
+            customers.forEach(c => {
+                if (c.logs) {
+                    c.logs.forEach(log => {
+                        allLogs.push({ ...log, customerId: c.id, customerName: c.name, customerPhone: c.phone, customerStatus: c.status });
+                    });
+                }
+            });
+
+            // Sắp xếp mới nhất lên đầu
+            allLogs.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+            const feed = document.getElementById('globalTimelineFeed');
+            if (allLogs.length === 0) {
+                feed.innerHTML = '<div class="empty-state">Chưa có hoạt động nào được ghi nhận</div>';
+                return;
+            }
+
+            let html = '';
+            let currentDay = '';
+
+            allLogs.forEach(log => {
+                const logDate = new Date(log.time);
+                // Tạo chuỗi ngày theo định dạng VD: "Thứ 6, 05/09/2026"
+                const dayStr = logDate.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });
+                
+                if (dayStr !== currentDay) {
+                    if (currentDay !== '') html += `</div>`; // Đóng group cũ
+                    html += `<div class="global-timeline-group"><div class="global-timeline-header">${dayStr}</div>`;
+                    currentDay = dayStr;
+                }
+
+                const timeStr = `${String(logDate.getHours()).padStart(2,'0')}:${String(logDate.getMinutes()).padStart(2,'0')}`;
+                const st = statusConfig[log.customerStatus];
+
+                html += `
+                    <div class="global-log-card" style="border-left-color: ${st.color}">
+                        <div class="global-log-header">
+                            <div class="global-log-time">🕐 ${timeStr}</div>
+                            <div class="status-badge" style="background: ${st.bgColor}; color: ${st.color}; font-size:10px;">${st.label}</div>
+                        </div>
+                        <div class="global-log-customer">👤 ${log.customerName} (${log.customerPhone})</div>
+                        <div class="global-log-content">📝 ${log.content}</div>
+                        <div class="global-log-actions">
+                            <a href="javascript:void(0)" onclick="logCall(${log.customerId}, '${log.customerPhone}')" class="global-log-btn" style="background:#e0f2fe; color:#0369a1;">📞 Gọi lại</a>
+                            <button onclick="messageCustomer(${log.customerId}, '${log.customerName.replace(/'/g, "\\'")}', '${log.customerPhone}')" class="global-log-btn" style="background:#dbeafe; color:#1d4ed8;">💬 Nhắn Zalo</button>
+                        </div>
+                    </div>
+                `;
+            });
+            if (currentDay !== '') html += `</div>`; // Đóng group cuối cùng
+
+            feed.innerHTML = html;
         }
 
         // ============ VCF EXPORT ============
@@ -363,7 +431,7 @@
             
             if (sortBy === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
             else if (sortBy === 'overdue') filtered.sort((a, b) => new Date(a.lastContactedAt) - new Date(b.lastContactedAt)); // Cũ nhất lên đầu
-            else filtered.sort((a, b) => new Date(b.lastContactedAt) - new Date(a.lastContactedAt)); // Mặc định: Mới tương tác lên đầu
+            else filtered.sort((a, b) => new Date(b.lastContactedAt) - new Date(a.lastContactedAt)); // Mới tương tác lên đầu
 
             updateCounters(); updateDashboard(); renderCustomers(filtered, searchTerm);
         }
@@ -389,6 +457,7 @@
             c.lastContactedAt = new Date().toISOString();
             if(c.status === 'new') c.status = 'contacted';
             saveData(); renderList(); showNotification('✅ Đã ghi nhận lịch sử!');
+            input.value = '';
         }
 
         function changeCustomerStatus(id, newStatus) {
@@ -420,7 +489,6 @@
                 const cardClass = overdue ? 'customer-card overdue' : 'customer-card';
                 const overdueHtml = overdue ? `<div class="overdue-badge">⚠️ QUÁ 7 NGÀY CHƯA CẬP NHẬT TÌNH HÌNH!</div>` : '';
 
-                // Render Logs Timeline
                 let logsHtml = '';
                 if (c.logs && c.logs.length > 0) {
                     logsHtml = `<div class="log-list">` + c.logs.slice(0, 5).map(l => `
@@ -434,7 +502,6 @@
                     `).join('') + (c.logs.length > 5 ? `<div style="font-size:12px; color:#9ca3af; text-align:center; padding-top:8px;">... còn ${c.logs.length - 5} dòng lịch sử cũ hơn</div>` : '') + `</div>`;
                 }
 
-                // Dropdown đổi trạng thái nhanh
                 const statusOptions = Object.keys(statusConfig).map(k => `<option value="${k}" ${c.status === k ? 'selected' : ''}>${statusConfig[k].label}</option>`).join('');
 
                 return `
@@ -447,7 +514,7 @@
                                 <div class="info-row"><span class="info-icon">📞</span> <strong style="font-size: 16px;">${c.phone}</strong></div>
                                 ${c.address ? `<div class="info-row"><span class="info-icon">📍</span> ${c.address}</div>` : ''}
                             </div>
-                            <select onchange="changeCustomerStatus(${c.id}, this.value)" style="background: ${statusConfig[c.status].bgColor}; color: ${statusConfig[c.status].color}; border: 1px solid ${statusConfig[c.status].color}; border-radius: 20px; padding: 4px 8px; font-size: 11px; font-weight: 700; outline: none; appearance: none; cursor:pointer; text-align:center;">
+                            <select onchange="changeCustomerStatus(${c.id}, this.value)" style="background: ${statusConfig[c.status].bgColor}; color: ${statusConfig[c.status].color}; border: 1px solid ${statusConfig[c.status].color}; border-radius: 20px; padding: 4px 8px; font-size: 11px; font-weight: 700; outline: none; appearance: none; cursor:pointer; text-align:center; max-height: 28px;">
                                 ${statusOptions}
                             </select>
                         </div>
@@ -475,7 +542,7 @@
                             <span style="font-size:16px;">📥</span> Lưu số
                         </button>
                         <button class="card-action-btn btn-edit" onclick="editCustomer(${c.id})">
-                            <span style="font-size:16px;">✏️</span> Sửa
+                            <span style="font-size:16px;">✏️</span> Sửa/Xóa
                         </button>
                     </div>
                 </div>`;
@@ -517,10 +584,54 @@
             document.getElementById('name').value = c.name; document.getElementById('phone').value = c.phone;
             document.getElementById('address').value = c.address; document.getElementById('status').value = c.status;
             
-            // Ẩn ô nhập ghi chú ban đầu khi edit vì log đã đảm nhiệm
             document.getElementById('notes').parentElement.style.display = 'none';
-            document.getElementById('formTitle').innerHTML = '✏️ Cập nhật Thông tin'; document.querySelector('button[type="submit"]').textContent = 'Lưu thông tin';
-            document.getElementById('formContainer').classList.add('show'); document.getElementById('btnToggleForm').innerHTML = '<span>✕</span> Hủy cập nhật'; window.scrollTo(0,0);
+            document.getElementById('formTitle').innerHTML = '✏️ Cập nhật hoặc Xóa thông tin'; 
+            
+            // Xóa nút submit cũ
+            const oldSubmitBtn = document.querySelector('.btn-submit');
+            const submitParent = oldSubmitBtn.parentElement;
+            
+            // Tạo layout chứa nút Cập nhật và Xóa
+            const actionDiv = document.createElement('div');
+            actionDiv.style.display = 'flex';
+            actionDiv.style.gap = '8px';
+            actionDiv.style.marginTop = '16px';
+            actionDiv.id = 'editActionBtns';
+            
+            actionDiv.innerHTML = `
+                <button type="submit" class="btn btn-submit" style="margin-top:0; flex:2;">💾 Lưu thay đổi</button>
+                <button type="button" onclick="deleteCustomer(${id})" class="btn" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; margin-top:0; flex:1;">🗑️ Xóa thẻ</button>
+            `;
+            
+            oldSubmitBtn.replaceWith(actionDiv);
+            
+            document.getElementById('formContainer').classList.add('show'); 
+            document.getElementById('btnToggleForm').innerHTML = '<span>✕</span> Hủy cập nhật'; window.scrollTo(0,0);
+        }
+
+        function deleteCustomer(id) {
+            if(confirm('Cảnh báo: Bạn chắc chắn muốn xóa khách hàng này cùng toàn bộ lịch sử?')) { 
+                customers = customers.filter(c => c.id !== id); 
+                saveData(); 
+                showNotification('✅ Đã xóa khách hàng!'); 
+                
+                // Phục hồi form
+                const editDiv = document.getElementById('editActionBtns');
+                if(editDiv) {
+                    const btn = document.createElement('button');
+                    btn.type = 'submit';
+                    btn.className = 'btn btn-submit';
+                    btn.textContent = 'Lưu thông tin';
+                    editDiv.replaceWith(btn);
+                }
+                
+                document.getElementById('customerForm').reset();
+                document.getElementById('notes').parentElement.style.display = 'block'; 
+                document.getElementById('formContainer').classList.remove('show');
+                document.getElementById('btnToggleForm').innerHTML = '<span>➕</span> Thêm khách hàng mới';
+                editingId = null;
+                renderList(); 
+            }
         }
 
         function handleFormSubmit(e) {
@@ -529,6 +640,16 @@
             if (editingId) {
                 const idx = customers.findIndex(c => c.id === editingId); customers[idx] = { ...customers[idx], ...newData };
                 showNotification('✏️ Cập nhật thành công!'); editingId = null;
+                
+                // Phục hồi form
+                const editDiv = document.getElementById('editActionBtns');
+                if(editDiv) {
+                    const btn = document.createElement('button');
+                    btn.type = 'submit';
+                    btn.className = 'btn btn-submit';
+                    btn.textContent = 'Lưu thông tin';
+                    editDiv.replaceWith(btn);
+                }
             } else {
                 const initNote = document.getElementById('notes').value.trim(); 
                 const newC = { id: Date.now(), ...newData, createdAt: new Date().toISOString(), lastContactedAt: new Date().toISOString(), logs: [] };
@@ -548,7 +669,6 @@
                     const imported = JSON.parse(ev.target.result);
                     if(confirm(`Tìm thấy ${imported.length} thẻ data. Gộp chung (Merge) theo SĐT?`)) {
                         imported.forEach(imp => { if(!customers.find(c => c.phone === imp.phone)) {
-                            // Normalize data
                             if(!imp.logs) imp.logs = []; 
                             if(imp.notes && imp.logs.length === 0) { imp.logs.push({time: imp.createdAt || new Date().toISOString(), content: imp.notes}); delete imp.notes; }
                             if(!imp.lastContactedAt) imp.lastContactedAt = imp.createdAt || new Date().toISOString(); 
@@ -572,7 +692,19 @@
             document.getElementById('btnToggleForm').addEventListener('click', () => {
                 const f = document.getElementById('formContainer'); f.classList.toggle('show'); 
                 document.getElementById('btnToggleForm').innerHTML = f.classList.contains('show') ? '<span>✕</span> Đóng Form' : '<span>➕</span> Thêm khách hàng mới';
-                if(!f.classList.contains('show')) { document.getElementById('customerForm').reset(); document.getElementById('notes').parentElement.style.display = 'block'; }
+                if(!f.classList.contains('show')) { 
+                    document.getElementById('customerForm').reset(); 
+                    document.getElementById('notes').parentElement.style.display = 'block'; 
+                    const editDiv = document.getElementById('editActionBtns');
+                    if(editDiv) {
+                        const btn = document.createElement('button');
+                        btn.type = 'submit';
+                        btn.className = 'btn btn-submit';
+                        btn.textContent = 'Lưu thông tin';
+                        editDiv.replaceWith(btn);
+                    }
+                    editingId = null;
+                }
             });
             document.getElementById('btnExport').addEventListener('click', exportData);
             document.getElementById('btnExportVCF').addEventListener('click', exportVCF);
