@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v10.2 - Copy Fix</title>
+    <title>Sales CRM Pro v10.4 - Clean & Fix Copy</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -140,7 +140,7 @@
             <button class="tab-btn" onclick="switchTab(event, 'stats')">📊 Thống kê</button>
         </div>
 
-        <!-- TAB 1: DANH THIẾP (KHÁCH HÀNG) -->
+        <!-- TAB 1: DANH THIẾP -->
         <div id="list-tab" class="tab-content active">
             <div class="dashboard">
                 <div class="stats-grid">
@@ -165,7 +165,7 @@
                     <div class="form-group"><label>Tên khách hàng *</label><input type="text" id="name" required placeholder="VD: Anh Hoàng Cầu Giấy"></div>
                     <div class="form-group"><label>Số điện thoại *</label><input type="tel" id="phone" required placeholder="VD: 0912345678"></div>
                     <div class="form-group"><label>Địa chỉ / Tỉnh thành</label><input type="text" id="address" placeholder="VD: Hà Nội"></div>
-                    <div class="form-group"><label>📝 Nhu cầu / Ghi chú ban đầu</label><textarea id="notes" placeholder="VD: Đang phân vân giữa xe A và xe B, cần hỗ trợ trả góp 70%..."></textarea></div>
+                    <div class="form-group"><label>📝 Nhu cầu / Ghi chú ban đầu</label><textarea id="notes" placeholder="VD: Đang phân vân giữa xe A và xe B..."></textarea></div>
                     <div class="form-group">
                         <label>Tình trạng hiện tại</label>
                         <select id="status">
@@ -196,13 +196,12 @@
             <div id="listContainer" class="list-container"></div>
         </div>
 
-        <!-- TAB 2: NHẬT KÝ CHUNG (GLOBAL TIMELINE) -->
+        <!-- TAB 2: NHẬT KÝ CHUNG -->
         <div id="timeline-tab" class="tab-content">
             <div class="dashboard" style="margin-bottom: 20px;">
                 <h2 style="font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 8px;">Dòng thời gian hoạt động</h2>
                 <p style="font-size: 13px; color: #6b7280;">Hiển thị toàn bộ lịch sử chăm sóc của tất cả khách hàng từ mới nhất đến cũ nhất.</p>
             </div>
-            
             <div id="globalTimelineFeed"></div>
         </div>
 
@@ -243,15 +242,6 @@
                     customers.forEach(c => {
                         if (!c.logs) c.logs = [];
                         if (c.notes && c.logs.length === 0) { c.logs.push({ time: c.createdAt, content: c.notes }); }
-                        if (c.appointments && c.appointments.length > 0) {
-                            c.appointments.forEach(a => {
-                                const aptLog = `📅 Từng lên lịch hẹn: ${a.date} ${a.time} - ${a.note || ''}`;
-                                if(!c.logs.some(l => l.content === aptLog)) {
-                                    c.logs.push({ time: new Date(a.date).toISOString(), content: aptLog });
-                                }
-                            });
-                            delete c.appointments; 
-                        }
                         if (!c.lastContactedAt) c.lastContactedAt = c.createdAt;
                         c.logs.sort((a,b) => new Date(b.time) - new Date(a.time));
                     });
@@ -283,6 +273,59 @@
             document.getElementById(tabName + '-tab').classList.add('active'); event.currentTarget.classList.add('active');
             if (tabName === 'stats') renderChart();
             if (tabName === 'timeline') renderGlobalTimeline();
+        }
+
+        // ============ TÍNH NĂNG COPY SỐ (ĐỒNG BỘ 100% FIX LỖI APPLE) ============
+        function copyPhoneNumber(phone) {
+            // Tạo thẻ textarea để copy (bắt buộc dùng textarea để fix lỗi của iOS Safari)
+            var textArea = document.createElement("textarea");
+            textArea.value = phone;
+            
+            // Cài đặt CSS để ẩn thẻ đi mà không dùng display:none (nếu dùng display:none sẽ không copy được)
+            textArea.style.position = "fixed";
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.width = "2em";
+            textArea.style.height = "2em";
+            textArea.style.padding = "0";
+            textArea.style.border = "none";
+            textArea.style.outline = "none";
+            textArea.style.boxShadow = "none";
+            textArea.style.background = "transparent";
+            document.body.appendChild(textArea);
+            
+            textArea.focus();
+            textArea.select();
+            
+            // Xử lý vùng chọn chuyên biệt để ép iOS (iPhone/iPad) phải ghi nhận
+            if (navigator.userAgent.match(/ipad|ipod|iphone/i)) {
+                textArea.contentEditable = true;
+                textArea.readOnly = false;
+                var range = document.createRange();
+                range.selectNodeContents(textArea);
+                var selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                textArea.setSelectionRange(0, 999999);
+            }
+
+            var successful = false;
+            try {
+                // Chạy lệnh copy đồng bộ vào hệ thống
+                successful = document.execCommand('copy');
+            } catch (err) {
+                successful = false;
+            }
+
+            // Gỡ bỏ thẻ nháp
+            document.body.removeChild(textArea);
+
+            if (successful) {
+                showNotification('📋 Đã copy số điện thoại: ' + phone);
+            } else {
+                // Lớp bảo vệ cuối: Bật prompt nếu mọi biện pháp của hệ thống bị vô hiệu hóa
+                window.prompt("Trình duyệt web chặn copy. Bạn hãy copy thủ công số ở dưới:", phone);
+            }
         }
 
         // ============ TAB NHẬT KÝ CHUNG ============
@@ -346,7 +389,6 @@
             str += `FN:${c.name}\r\n`;
             if (c.phone) str += `TEL;TYPE=CELL:${c.phone.replace(/\s+/g, '')}\r\n`;
             if (c.address) str += `ADR;TYPE=HOME:;;${c.address};;;;\r\n`;
-            
             let noteParams = `Trạng thái: ${statusConfig[c.status].label}`;
             if (c.logs && c.logs.length > 0) noteParams += ` | Ghi chú: ${c.logs[0].content}`;
             str += `NOTE:${noteParams.replace(/\n/g, '\\n')}\r\nEND:VCARD\r\n`;
@@ -371,47 +413,6 @@
             const c = customers.find(x => x.id === id); if (!c) return;
             downloadVCF(buildVCFString(c), `DanhBa_${c.name.replace(/\s+/g, '_')}.vcf`);
             showNotification(`📥 Đã lưu số: ${c.name}`);
-        }
-
-        // ============ TÍNH NĂNG COPY SỐ (FALLBACK OFFLINE CHUẨN) ============
-        function copyPhoneNumber(phone) {
-            // Sử dụng textarea ẩn để copy, đảm bảo hoạt động cả trên file:// và iOS
-            const textArea = document.createElement("textarea");
-            textArea.value = phone;
-            
-            // Giấu textarea khỏi màn hình để không bị giật UI
-            textArea.style.position = "fixed";
-            textArea.style.left = "-999999px";
-            textArea.style.top = "-999999px";
-            document.body.appendChild(textArea);
-            
-            // Fix riêng cho iOS Safari
-            if (navigator.userAgent.match(/ipad|ipod|iphone/i)) {
-                textArea.contentEditable = true;
-                textArea.readOnly = false;
-                const range = document.createRange();
-                range.selectNodeContents(textArea);
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-                textArea.setSelectionRange(0, 999999);
-            } else {
-                textArea.select();
-            }
-
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    showNotification(`📋 Đã copy số: ${phone}`);
-                } else {
-                    showNotification(`❌ Không thể copy. Vui lòng copy thủ công: ${phone}`, 'error');
-                }
-            } catch (err) {
-                showNotification(`❌ Lỗi. Vui lòng copy thủ công: ${phone}`, 'error');
-            }
-            
-            // Dọn dẹp DOM
-            document.body.removeChild(textArea);
         }
 
         // ============ LIST, TIMELINE LOGS & OVERDUE ============
@@ -440,8 +441,8 @@
             }
             
             if (sortBy === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name, 'vi'));
-            else if (sortBy === 'overdue') filtered.sort((a, b) => new Date(a.lastContactedAt) - new Date(b.lastContactedAt)); // Cũ nhất lên đầu
-            else filtered.sort((a, b) => new Date(b.lastContactedAt) - new Date(a.lastContactedAt)); // Mới tương tác lên đầu
+            else if (sortBy === 'overdue') filtered.sort((a, b) => new Date(a.lastContactedAt) - new Date(b.lastContactedAt)); 
+            else filtered.sort((a, b) => new Date(b.lastContactedAt) - new Date(a.lastContactedAt)); 
 
             updateCounters(); updateDashboard(); renderCustomers(filtered, searchTerm);
         }
@@ -578,8 +579,6 @@
             document.getElementById('formTitle').innerHTML = '✏️ Cập nhật Thông tin'; 
             
             const submitBtn = document.getElementById('submitBtn');
-            const parent = submitBtn.parentElement;
-            
             const actionDiv = document.createElement('div');
             actionDiv.style.display = 'flex'; actionDiv.style.gap = '8px'; actionDiv.style.marginTop = '16px'; actionDiv.id = 'editActionBtns';
             
@@ -589,7 +588,6 @@
             `;
             
             submitBtn.replaceWith(actionDiv);
-            
             document.getElementById('formContainer').classList.add('show'); 
             document.getElementById('btnToggleForm').innerHTML = '<span>✕</span> Hủy cập nhật'; window.scrollTo(0,0);
         }
