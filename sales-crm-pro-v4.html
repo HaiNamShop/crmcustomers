@@ -7,12 +7,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v10.5 - Quick Filters</title>
+    <title>Sales CRM Pro v11 - Smart Paste & FAB</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f8f9fa; color: #1a1a1a; line-height: 1.6; }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; min-height: 100vh; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f8f9fa; color: #1a1a1a; line-height: 1.6; padding-bottom: 80px; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; min-height: 100vh; position: relative;}
         .header { text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e0e0e0; }
         .header h1 { font-size: 28px; margin-bottom: 8px; color: #1a1a1a; }
         .header p { font-size: 14px; color: #666; font-weight: 500; }
@@ -51,6 +51,10 @@
         .btn-success { background: #10b981; color: white; }
         .btn-success:active { transform: scale(0.98); background: #059669; }
         
+        /* Floating Action Button (FAB) */
+        .fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; background-color: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); border: none; cursor: pointer; z-index: 999; transition: all 0.2s ease; }
+        .fab:active { transform: scale(0.9); box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4); }
+        
         /* Form */
         .form-container { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); display: none; border: 1px solid #e5e7eb; }
         .form-container.show { display: block; animation: slideDown 0.3s ease; }
@@ -62,6 +66,13 @@
         .form-group textarea { resize: vertical; min-height: 100px; }
         .btn-submit { background: #10b981; color: white; width: 100%; font-size: 16px; padding: 14px; margin-top: 8px; }
         
+        /* Smart Paste Box */
+        .smart-paste-box { background: #e0f2fe; padding: 14px; border-radius: 8px; border: 1px dashed #3b82f6; margin-bottom: 20px; }
+        .smart-paste-box label { color: #0369a1; font-weight: 700; font-size: 13px; margin-bottom: 8px; display: block;}
+        .smart-paste-box input { width: 100%; padding: 10px; border: 1px solid #bae6fd; border-radius: 6px; font-size: 14px; outline: none; }
+        .smart-paste-box input:focus { border-color: #0284c7; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+        .smart-paste-note { font-size: 11px; color: #0284c7; margin-top: 6px; font-style: italic; }
+
         /* Search & Filter */
         .search-container { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 16px; }
         .search-input { width: 100%; padding: 12px 14px; font-size: 15px; border: 1px solid #e5e7eb; border-radius: 8px; font-family: inherit; margin-bottom: 12px; background: #f9fafb;}
@@ -83,7 +94,7 @@
         .info-row { font-size: 14px; color: #4b5563; display: flex; align-items: flex-start; gap: 8px; margin: 8px 0; font-weight: 500;}
         .info-icon { font-size: 16px; }
         
-        /* TIMELINE LOGS (Thẻ Khách hàng) */
+        /* TIMELINE LOGS */
         .logs-container { background: #f8fafc; border-top: 1px solid #e5e7eb; padding: 16px; }
         .logs-title { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center;}
         
@@ -111,14 +122,12 @@
         .btn-vcf { background: #dcfce7; color: #166534; }
         .btn-edit { background: #f3f4f6; color: #4b5563; }
         
-        /* Search Badges */
         .match-badge-container { padding: 0 16px 12px 16px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .match-tag { font-size: 11px; background: #fef9c3; color: #b45309; padding: 4px 10px; border-radius: 12px; font-weight: 600; border: 1px solid #fde68a;}
         
         /* GLOBAL TIMELINE */
         .global-timeline-group { margin-bottom: 24px; }
         .global-timeline-header { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 12px; padding: 6px 12px; background: #e5e7eb; display: inline-block; border-radius: 6px;}
-        
         .global-log-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid #3b82f6; display: flex; flex-direction: column; gap: 8px;}
         .global-log-header { display: flex; justify-content: space-between; align-items: center; }
         .global-log-time { font-weight: 700; color: #1f2937; font-size: 15px;}
@@ -128,10 +137,17 @@
         .global-log-btn { padding: 8px; font-size: 13px; font-weight: 600; border-radius: 6px; text-align: center; text-decoration: none; border: none; cursor: pointer;}
         
         .empty-state { text-align: center; padding: 60px 20px; color: #6b7280; font-size: 15px; background: white; border-radius: 12px; font-weight: 500; border: 2px dashed #e5e7eb;}
+
+        @media (max-width: 480px) {
+            .fab { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 22px;}
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Nút FAB Thêm nổi -->
+        <button class="fab" id="fabAddCustomer" title="Thêm khách hàng">➕</button>
+
         <div class="header">
             <h1>C-CRM Pro</h1>
             <p>Quản lý Khách hàng & Nhật ký chung</p>
@@ -175,6 +191,14 @@
 
             <div id="formContainer" class="form-container">
                 <h2 class="form-title" id="formTitle">👤 Nhập thông tin Khách hàng</h2>
+                
+                <!-- SMART PASTE BOX -->
+                <div class="smart-paste-box" id="smartPasteContainer">
+                    <label>✨ Dán nhanh (Smart Paste)</label>
+                    <input type="text" id="smartPasteInput" placeholder="Dán nội dung copy vào đây..." oninput="handleSmartPaste(event)">
+                    <div class="smart-paste-note">Hệ thống tự động nhặt Số điện thoại và Tên tách xuống ô bên dưới.</div>
+                </div>
+
                 <form id="customerForm" class="form">
                     <div class="form-group"><label>Tên khách hàng *</label><input type="text" id="name" required placeholder="VD: Anh Hoàng Cầu Giấy"></div>
                     <div class="form-group"><label>Số điện thoại *</label><input type="tel" id="phone" required placeholder="VD: 0912345678"></div>
@@ -200,7 +224,6 @@
                 <div class="filter-controls">
                     <select id="filterStatus">
                         <option value="all">📊 Tất cả thẻ</option>
-                        <!-- Options generated by JS -->
                     </select>
                     <select id="sortBy">
                         <option value="recent">🕐 Mới tương tác (lên đầu)</option>
@@ -300,11 +323,40 @@
             if (tabName === 'timeline') renderGlobalTimeline();
         }
 
-        // ============ TÍNH NĂNG BỘ LỌC NHANH TRÊN DASHBOARD (MỚI) ============
+        // ============ TÍNH NĂNG DÁN NHANH (SMART PASTE) ============
+        function handleSmartPaste(e) {
+            setTimeout(() => {
+                let text = e.target.value.trim();
+                if (!text) return;
+
+                // Thuật toán tìm số điện thoại (từ 10-11 số liên tiếp, có thể chứa khoảng trắng hoặc dấu chấm/-)
+                const phoneRegex = /(?:0|\+84|84)[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{3,4}/g;
+                let phones = text.match(phoneRegex);
+                
+                if (phones && phones.length > 0) {
+                    let rawPhone = phones[0];
+                    // Clean số điện thoại
+                    let cleanPhone = rawPhone.replace(/[-.\s]/g, '');
+                    document.getElementById('phone').value = cleanPhone;
+                    
+                    // Loại bỏ SĐT khỏi chuỗi để lấy phần còn lại làm Tên/Ghi chú
+                    let namePart = text.replace(rawPhone, '').replace(/[-_:,]/g, ' ').trim();
+                    // Loại bỏ khoảng trắng thừa
+                    namePart = namePart.replace(/\s+/g, ' ');
+                    
+                    if (namePart) {
+                        document.getElementById('name').value = namePart;
+                    }
+                    
+                    e.target.value = ''; // Làm sạch ô Dán nhanh
+                    showNotification('✨ Đã tự động tách Tên và Số điện thoại!');
+                }
+            }, 10);
+        }
+
+        // ============ BỘ LỌC NHANH TRÊN DASHBOARD ============
         function quickFilter(filterType) {
-            // Đặt lại ô tìm kiếm
             document.getElementById('searchInput').value = '';
-            
             const filterEl = document.getElementById('filterStatus');
             const sortEl = document.getElementById('sortBy');
             
@@ -314,11 +366,8 @@
                     showNotification('🎉 Tuyệt vời! Bạn không có khách hàng nào bị bỏ quên.');
                     filterEl.value = 'all';
                 } else {
-                    // Nếu bấm vào Bị Quên, ta force dropdown chọn overdue_only
-                    // Lưu ý: Option 'overdue_only' sẽ được sinh ra ở hàm updateCounters
-                    // Nên ta tạm set để renderList quét
                     filterEl.value = 'overdue_only';
-                    sortEl.value = 'overdue'; // Sắp xếp cũ nhất lên đầu
+                    sortEl.value = 'overdue'; 
                     showNotification('⚠️ Đang lọc các khách hàng cần gọi hâm nóng lại!');
                 }
             } else {
@@ -326,8 +375,6 @@
             }
 
             renderList();
-            
-            // Tự động cuộn xuống danh sách
             setTimeout(() => {
                 const listContainer = document.getElementById('listContainer');
                 if (listContainer) {
@@ -337,7 +384,7 @@
             }, 100);
         }
 
-        // ============ TÍNH NĂNG COPY SỐ ============
+        // ============ TÍNH NĂNG COPY SỐ (ĐỒNG BỘ) ============
         function copyPhoneNumber(phone) {
             var textArea = document.createElement("textarea");
             textArea.value = phone;
@@ -377,9 +424,9 @@
             document.body.removeChild(textArea);
 
             if (successful) {
-                showNotification('📋 Đã copy số điện thoại: ' + phone);
+                showNotification('📋 Đã copy số: ' + phone);
             } else {
-                window.prompt("Trình duyệt web chặn copy. Bạn hãy copy thủ công số ở dưới:", phone);
+                window.prompt("Hãy copy số thủ công ở ô dưới đây:", phone);
             }
         }
 
@@ -484,7 +531,6 @@
 
             let filtered = customers;
             
-            // Xử lý bộ lọc trạng thái (kể cả overdue_only)
             if (filterStatus === 'overdue_only') {
                 filtered = filtered.filter(c => isCustomerOverdue(c));
             } else if (filterStatus && filterStatus !== 'all') { 
@@ -505,15 +551,12 @@
             else if (sortBy === 'overdue') filtered.sort((a, b) => new Date(a.lastContactedAt) - new Date(b.lastContactedAt)); 
             else filtered.sort((a, b) => new Date(b.lastContactedAt) - new Date(a.lastContactedAt)); 
 
-            updateCounters(); 
-            updateDashboard(); 
-            renderCustomers(filtered, searchTerm);
+            updateCounters(); updateDashboard(); renderCustomers(filtered, searchTerm);
         }
 
         function updateCounters() {
             const select = document.getElementById('filterStatus'); 
             const currentVal = select.value;
-            
             select.innerHTML = `<option value="all">📊 Tất cả thẻ (${customers.length})</option>`;
             
             const overdueCount = customers.filter(c => isCustomerOverdue(c)).length;
@@ -525,8 +568,6 @@
                 const count = customers.filter(c => c.status === k).length; 
                 select.innerHTML += `<option value="${k}">${statusConfig[k].label.split(' ')[0]} (${count})</option>`;
             });
-            
-            // Trả lại giá trị dropdown hiện tại để người dùng không bị mất filter
             if(currentVal) select.value = currentVal;
         }
 
@@ -651,6 +692,7 @@
             document.getElementById('name').value = c.name; document.getElementById('phone').value = c.phone;
             document.getElementById('address').value = c.address; document.getElementById('status').value = c.status;
             
+            document.getElementById('smartPasteContainer').style.display = 'none';
             document.getElementById('notes').parentElement.style.display = 'none';
             document.getElementById('formTitle').innerHTML = '✏️ Cập nhật Thông tin'; 
             
@@ -681,6 +723,7 @@
                 }
                 
                 document.getElementById('customerForm').reset();
+                document.getElementById('smartPasteContainer').style.display = 'block';
                 document.getElementById('notes').parentElement.style.display = 'block'; 
                 document.getElementById('formContainer').classList.remove('show');
                 document.getElementById('btnToggleForm').innerHTML = '<span>➕</span> Thêm khách hàng mới';
@@ -707,7 +750,10 @@
                 if (initNote) newC.logs.push({ time: newC.createdAt, content: `Nhu cầu ban đầu: ${initNote}` }); 
                 customers.push(newC); showNotification('✅ Thêm thẻ khách hàng thành công!');
             }
-            saveData(); document.getElementById('customerForm').reset(); document.getElementById('notes').parentElement.style.display = 'block'; document.getElementById('formContainer').classList.remove('show');
+            saveData(); document.getElementById('customerForm').reset(); 
+            document.getElementById('smartPasteContainer').style.display = 'block';
+            document.getElementById('notes').parentElement.style.display = 'block'; 
+            document.getElementById('formContainer').classList.remove('show');
             document.getElementById('btnToggleForm').innerHTML = '<span>➕</span> Thêm khách hàng mới'; renderList(); updateDashboard();
         }
 
@@ -740,11 +786,22 @@
         }
 
         function attachEvents() {
+            // Nút FAB nổi
+            document.getElementById('fabAddCustomer').addEventListener('click', () => {
+                switchTab(null, 'list'); // Ép về tab List
+                const f = document.getElementById('formContainer'); 
+                if(!f.classList.contains('show')) { 
+                    document.getElementById('btnToggleForm').click();
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
             document.getElementById('btnToggleForm').addEventListener('click', () => {
                 const f = document.getElementById('formContainer'); f.classList.toggle('show'); 
                 document.getElementById('btnToggleForm').innerHTML = f.classList.contains('show') ? '<span>✕</span> Đóng Form' : '<span>➕</span> Thêm khách hàng mới';
                 if(!f.classList.contains('show')) { 
                     document.getElementById('customerForm').reset(); 
+                    document.getElementById('smartPasteContainer').style.display = 'block';
                     document.getElementById('notes').parentElement.style.display = 'block'; 
                     const editDiv = document.getElementById('editActionBtns');
                     if(editDiv) {
