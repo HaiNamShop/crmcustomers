@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v11 - Smart Paste & FAB</title>
+    <title>Sales CRM Pro v10.6 - Text Phone Input</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -201,7 +201,8 @@
 
                 <form id="customerForm" class="form">
                     <div class="form-group"><label>Tên khách hàng *</label><input type="text" id="name" required placeholder="VD: Anh Hoàng Cầu Giấy"></div>
-                    <div class="form-group"><label>Số điện thoại *</label><input type="tel" id="phone" required placeholder="VD: 0912345678"></div>
+                    <!-- ĐÃ SỬA: type="text" thay vì "tel" để hiển thị Quick Paste trên bàn phím -->
+                    <div class="form-group"><label>Số điện thoại *</label><input type="text" id="phone" required placeholder="VD: 0912345678"></div>
                     <div class="form-group"><label>Địa chỉ / Tỉnh thành</label><input type="text" id="address" placeholder="VD: Hà Nội"></div>
                     <div class="form-group"><label>📝 Nhu cầu / Ghi chú ban đầu</label><textarea id="notes" placeholder="VD: Đang phân vân giữa xe A và xe B..."></textarea></div>
                     <div class="form-group">
@@ -329,26 +330,19 @@
                 let text = e.target.value.trim();
                 if (!text) return;
 
-                // Thuật toán tìm số điện thoại (từ 10-11 số liên tiếp, có thể chứa khoảng trắng hoặc dấu chấm/-)
                 const phoneRegex = /(?:0|\+84|84)[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{3,4}/g;
                 let phones = text.match(phoneRegex);
                 
                 if (phones && phones.length > 0) {
                     let rawPhone = phones[0];
-                    // Clean số điện thoại
                     let cleanPhone = rawPhone.replace(/[-.\s]/g, '');
                     document.getElementById('phone').value = cleanPhone;
                     
-                    // Loại bỏ SĐT khỏi chuỗi để lấy phần còn lại làm Tên/Ghi chú
                     let namePart = text.replace(rawPhone, '').replace(/[-_:,]/g, ' ').trim();
-                    // Loại bỏ khoảng trắng thừa
                     namePart = namePart.replace(/\s+/g, ' ');
+                    if (namePart) document.getElementById('name').value = namePart;
                     
-                    if (namePart) {
-                        document.getElementById('name').value = namePart;
-                    }
-                    
-                    e.target.value = ''; // Làm sạch ô Dán nhanh
+                    e.target.value = ''; 
                     showNotification('✨ Đã tự động tách Tên và Số điện thoại!');
                 }
             }, 10);
@@ -786,9 +780,8 @@
         }
 
         function attachEvents() {
-            // Nút FAB nổi
             document.getElementById('fabAddCustomer').addEventListener('click', () => {
-                switchTab(null, 'list'); // Ép về tab List
+                switchTab(null, 'list');
                 const f = document.getElementById('formContainer'); 
                 if(!f.classList.contains('show')) { 
                     document.getElementById('btnToggleForm').click();
