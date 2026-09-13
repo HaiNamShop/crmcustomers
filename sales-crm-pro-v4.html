@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sales CRM">
-    <title>Sales CRM Pro v10.6 - Text Phone Input</title>
+    <title>Sales CRM Pro v10.5 - VCF Log Fix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,7 +29,7 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Dashboard & Stat Cards Clickable */
+        /* Dashboard */
         .dashboard { background: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .stat-card { background: #f9fafb; padding: 12px 8px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb; position: relative;}
@@ -94,7 +94,7 @@
         .info-row { font-size: 14px; color: #4b5563; display: flex; align-items: flex-start; gap: 8px; margin: 8px 0; font-weight: 500;}
         .info-icon { font-size: 16px; }
         
-        /* TIMELINE LOGS */
+        /* TIMELINE LOGS (Thẻ Khách hàng) */
         .logs-container { background: #f8fafc; border-top: 1px solid #e5e7eb; padding: 16px; }
         .logs-title { font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center;}
         
@@ -122,12 +122,14 @@
         .btn-vcf { background: #dcfce7; color: #166534; }
         .btn-edit { background: #f3f4f6; color: #4b5563; }
         
+        /* Search Badges */
         .match-badge-container { padding: 0 16px 12px 16px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .match-tag { font-size: 11px; background: #fef9c3; color: #b45309; padding: 4px 10px; border-radius: 12px; font-weight: 600; border: 1px solid #fde68a;}
         
         /* GLOBAL TIMELINE */
         .global-timeline-group { margin-bottom: 24px; }
         .global-timeline-header { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 12px; padding: 6px 12px; background: #e5e7eb; display: inline-block; border-radius: 6px;}
+        
         .global-log-card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid #3b82f6; display: flex; flex-direction: column; gap: 8px;}
         .global-log-header { display: flex; justify-content: space-between; align-items: center; }
         .global-log-time { font-weight: 700; color: #1f2937; font-size: 15px;}
@@ -420,7 +422,7 @@
             if (successful) {
                 showNotification('📋 Đã copy số: ' + phone);
             } else {
-                window.prompt("Hãy copy số thủ công ở ô dưới đây:", phone);
+                window.prompt("Trình duyệt web chặn copy. Bạn hãy copy thủ công số ở dưới:", phone);
             }
         }
 
@@ -508,6 +510,14 @@
         function exportSingleVCF(id) {
             const c = customers.find(x => x.id === id); if (!c) return;
             downloadVCF(buildVCFString(c), `DanhBa_${c.name.replace(/\s+/g, '_')}.vcf`);
+            
+            // GHI LOG KHI XUẤT LƯU VCF ĐƠN LẺ
+            c.logs.unshift({ time: new Date().toISOString(), content: "📥 Đã lưu số vào danh bạ (VCF)" }); 
+            c.lastContactedAt = new Date().toISOString();
+            if(c.status === 'new') c.status = 'contacted'; 
+            saveData(); 
+            renderList();
+            
             showNotification(`📥 Đã lưu số: ${c.name}`);
         }
 
